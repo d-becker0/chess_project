@@ -1,36 +1,77 @@
 from keys import *
 
 class Piece:
-    def __init__(self, team, position):
+    def __init__(self, team):
         self.team = team
-        self.position = position
         self.has_moved = False
         self.moved_last = False
 
-        self.possible_moves = []
+        # define moves that can be taken, and piece logic
+        # strides are directions a piece can move across the whol board. Ex: rook moves
+        # steps are single spaces a piece can move. Ex: King moves
+        # specials are special movements. Ex: castling for king, pawn double move
+        self.strides = []
+        self.steps = []
+        self.specials = []
 
-    def add_possible_move(self, move):
-        self.possible_moves.append(move)
+        self.valid_moves = []
 
-    def get_directions(self):   # possible moves described in x,y coords from perspective of piece going from bottom row to middle
-        return self.directions
+    def validate_move(self):
+        pass
+    
+    def is_space_legal(self, square):
+        # when square has piece
+        if square:
+            if square.team == self.team:
+                return False
+            else:
+                return True
+        # when square is empty
+        return True
 
-    def get_scalars(self):
-        return self.scalars
+    # yield the next square in series for strides. Ex: rook moves 1, rook moves 2, rook moves ...
+    # return format is x,y in perspective of piece starting at bottom of board (only matters for pawn, since 1 direction)
+    def yield_stride_squares(self, get_new_direction = False):
+        for direction in self.strides:
+            for scalar in range(1,BOARD_ROWS+1):
+                if get_new_direction:
+                    break
+                yield (scalar*direction[0],scalar*direction[1])
+    
+    def yield_step_squares(self):
+        for step in self.steps:
+            yield step
 
-    def get_team(self):
-        return self.team
+    def yield_specials(self):
+        for special in self.specials:
+            yield special
+
+    # TODO: this bool probably doesn't work the way I want it to
+    def yield_possible_moves(self, get_new_direction = False):
+        for stride in self.yield_stride_squares(self, get_new_direction):
+            yield stride
+        for step in self.yield_step_squares(self):
+            yield step
+        for special in self.yield_specials(self):
+            yield special
+    
+    # move defined by new coords and piece
+    def add_move(self, move):
+        self.valid_moves.append(move)
 
     def move(self):
         self.has_moved = True
         self.moved_last = True
 
+    def on_turn_end(self):
+        self.valid_moves = []
+
 class Pawn(Piece):
     def __init__(self, team):
         super().__init__(team)
-        self.directions = [(0,1),(1,1),(-1,1)]
-        self.scalars    = [1]
-        self.specialset = [(self.send_enpassant, self.recieve_enpassant), 
+        self.strides = []
+        self.steps = [(0,1),(1,1),(-1,1)]
+        self.specials = [(self.send_enpassant, self.recieve_enpassant), 
                            (self.send_promote, self.recieve_promote)]
 
     def send_enpassant(self):
@@ -48,37 +89,37 @@ class Pawn(Piece):
 class Rook(Piece):
     def __init__(self, team):
         super().__init__(team)
-        self.directions = [(1,0),(-1,0),(0,1),(0,-1)]
-        self.scalars    = [    i for i in range(BOARD_ROWS)   ]
-        self.specialset = []
+        self.strides = [(1,0),(-1,0),(0,1),(0,-1)]
+        self.steps = []
+        self.specials = []
 
 class Knight(Piece):
     def __init__(self, team):
         super().__init__(team)
-        self.directions = [(2,1),(1,2),(-1,2),(-2,1),(-2,-1),(-1,-2),(1,-2),(2,-1)]
-        self.scalars    = [1]
-        self.specialset = []
+        self.strides = []
+        self.steps = [(2,1),(1,2),(-1,2),(-2,1),(-2,-1),(-1,-2),(1,-2),(2,-1)]
+        self.specials = []
 
 class Bishop(Piece):
     def __init__(self, team):
         super().__init__(team)
-        self.directions = [(1,1),(1,-1),(-1,-1),(-1,1)]
-        self.scalars    = [    i for i in range(BOARD_ROWS)   ]
-        self.specialset = []
+        self.strides = [(1,1),(1,-1),(-1,-1),(-1,1)]
+        self.steps = []
+        self.specials = []
 
 class Queen(Piece):
     def __init__(self, team):
         super().__init__(team)
-        self.directions = [(1,1),(1,-1),(-1,-1),(-1,1),(1,0),(-1,0),(0,1),(0,-1)]
-        self.scalars    = [    i for i in range(BOARD_ROWS)   ]
-        self.specialset = []
+        self.strides = [(1,1),(1,-1),(-1,-1),(-1,1),(1,0),(-1,0),(0,1),(0,-1)]
+        self.steps = []
+        self.specials = []
 
 class King(Piece):
     def __init__(self, team):
         super().__init__(team)
-        self.directions = [(1,1),(1,-1),(-1,-1),(-1,1),(1,0),(-1,0),(0,1),(0,-1)]
-        self.scalars    = [1]
-        self.specialset = [(self.send_castle, self.recieve_castle)]
+        self.strides = []
+        self.steps = [(1,1),(1,-1),(-1,-1),(-1,1),(1,0),(-1,0),(0,1),(0,-1)]
+        self.specials = [(self.send_castle, self.recieve_castle)]
 
     def send_castle(self):
         pass

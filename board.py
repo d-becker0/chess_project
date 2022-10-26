@@ -12,40 +12,24 @@ class Game:
         else: 
             return BLACK
 
-    def find_possible_moves(self, turn):
-        team = self.turn_to_team(turn)
-        oreintation = 1
-        if team == BLACK:
-            orientation = -1
+    # for all pieces of a certain team, return valid moves for that turn
+        # valid move = legal for piece type and does not result in check
+    def get_team_moves(self, team):
+        team_moves = []
+        for (row, col), piece in self.board.yield_coords_and_content():
+            if piece.team == team:
+                move = self.get_piece_moves(row, col, piece)
+                if move:
+                    team_moves.extend(move)
         
-        for piece in self.board.get_pieces():
-            
-            if piece.team != team:
-                continue
-            
-            row, column = piece.get_position()
-            directions = piece.get_directions()
-            scalars = piece.get_scalars()
-            special_moves = piece.get_specialset()
+        return team_moves
+                    
 
-            possible_moves = []
-            for direction in directions:
-                x, y = direction
-
-                for scalar in scalars:
-                    row_change = orientation*scalar*y
-                    col_change = orientation*scalar*x
-
-                    row_w_change = row_change + row
-                    col_w_change = col_change + column
-                    if self.board.on_board(row_w_change, col_w_change):
-                        if self.board.is_empty(row_w_change, col_w_change):
-                            possible_moves.append(row_w_change, col_w_change)
-                        else:
-                            
-
-
-
+    def get_piece_moves(self, row, col, piece):
+        valid_moves = []
+        for move in piece.yield_possible_moves():
+            self.board.check_move(piece, move)
+        
 
 class Board:
     def __init__(self):
@@ -85,9 +69,10 @@ class Board:
 
         return row
 
+    def yield_coords_and_content(self):
+        for row_val, row in enumerate(self.current_board):
+            for col_val, content in enumerate(row):
+                yield (row_val,col_val), content
 
-    def get_pieces(self):
-        return self.pieces
-    
     def remove_piece(self, piece):
         self.pieces.remove(piece)
