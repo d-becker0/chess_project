@@ -1,5 +1,19 @@
-from keys import *
+from constants import *
 from piece import make_piece
+
+
+class Player:
+    def __init__(self, team, all_pieces):
+        self.team = team
+        self.pieces = self._get_team_pieces(all_pieces)
+
+    def _get_team_pieces(self, pieces):
+        team_pieces = []
+        for piece in pieces:
+            if piece.team == self.team:
+                team_pieces.append(piece)
+        return team_pieces
+
 
 class Game:
     def __init__(self, board):
@@ -11,24 +25,6 @@ class Game:
             return WHITE
         else: 
             return BLACK
-
-    # for all pieces of a certain team, return valid moves for that turn
-        # valid move = legal for piece type and does not result in check
-    def get_team_moves(self, team):
-        team_moves = []
-        for (row, col), piece in self.board.yield_coords_and_content():
-            if piece.team == team:
-                move = self.get_piece_moves(row, col, piece)
-                if move:
-                    team_moves.extend(move)
-        
-        return team_moves
-                    
-
-    def get_piece_moves(self, row, col, piece):
-        valid_moves = []
-        for move in piece.yield_possible_moves():
-            self.board.check_move(piece, move)
         
 
 class Board:

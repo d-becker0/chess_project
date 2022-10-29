@@ -1,4 +1,4 @@
-from keys import *
+from constants import *
 
 class Piece:
     def __init__(self, team):
@@ -6,126 +6,90 @@ class Piece:
         self.has_moved = False
         self.moved_last = False
 
-        # define moves that can be taken, and piece logic
-        # strides are directions a piece can move across the whol board. Ex: rook moves
-        # steps are single spaces a piece can move. Ex: King moves
-        # specials are special movements. Ex: castling for king, pawn double move
-        self.strides = []
-        self.steps = []
-        self.specials = []
+        self.position = ()
 
-        self.valid_moves = []
+        # each direction in format (dir_x, dir_y, max_length_in_direction)
+        self.directions = []
 
-    def validate_move(self):
-        pass
-    
-    def is_space_legal(self, square):
-        # when square has piece
-        if square:
-            if square.team == self.team:
-                return False
-            else:
-                return True
-        # when square is empty
+        self.orientation = 1 if team == WHITE else -1  # orients pawns by team -- other pieces have symmetry
+
+    def get_moves(self):
+        if self.has_moved:
+            reachable_squares, blocked_squares = self.get_move_set()
+        else:
+            reachable_squares, blocked_squares = self.on_first_move()
+        
+        return reachable_squares, blocked_squares
+        
+
+    def get_move_set(self, board):
+        reachable_squares = []
+        blocked_squares = []
+        for direction in self.directions:
+
+            can_continue = True
+            for distance in range(direction[2]):
+                x,y = self._get_squares_from_vector(direction, distance)
+
+                square_content = board.get_square_content(x,y)
+
+                team = square_content.team
+
+                if self._can_reach_square(team):
+                    if can_continue:
+                        reachable_squares.append((x,y))
+                    else:
+                        blocked_squares.append((x,y))
+
+                # must come after _can_reach_square
+                if not self._can_go_further(team):
+                    can_continue = False
+            
+            return reachable_squares, blocked_squares
+
+    def _can_reach_square(self, team):
+        if team == self.team:
+            return False
         return True
 
-    # yield the next square in series for strides. Ex: rook moves 1, rook moves 2, rook moves ...
-    # return format is x,y in perspective of piece starting at bottom of board (only matters for pawn, since 1 direction)
-    def yield_stride_squares(self, get_new_direction = False):
-        for direction in self.strides:
-            for scalar in range(1,BOARD_ROWS+1):
-                if get_new_direction:
-                    break
-                yield (scalar*direction[0],scalar*direction[1])
-    
-    def yield_step_squares(self):
-        for step in self.steps:
-            yield step
+    def _can_go_further(self, team):
+        if team == EMPTY: # piece cannot go to squares when any piece (regardless of team) blocks access
+            return True
+        return False
 
-    def yield_specials(self):
-        for special in self.specials:
-            yield special
+    def _get_squares_from_vector(self, direction, distance):
+        dx = distance * direction[0] * self.orientation
+        dy = distance * direction[1] * self.orientation
 
-    # TODO: this bool probably doesn't work the way I want it to
-    def yield_possible_moves(self, get_new_direction = False):
-        for stride in self.yield_stride_squares(self, get_new_direction):
-            yield stride
-        for step in self.yield_step_squares(self):
-            yield step
-        for special in self.yield_specials(self):
-            yield special
-    
-    # move defined by new coords and piece
-    def add_move(self, move):
-        self.valid_moves.append(move)
+        return self.position[0]+dx, self.position[1]+dy
 
-    def move(self):
-        self.has_moved = True
-        self.moved_last = True
+    # basic behavior for pieces, must redefine for king and pawn
+    def on_first_move(self):
+        return self.get_move_set()
 
     def on_turn_end(self):
-        self.valid_moves = []
+        pass
 
 class Pawn(Piece):
     def __init__(self, team):
         super().__init__(team)
-        self.strides = []
-        self.steps = [(0,1),(1,1),(-1,1)]
-        self.specials = [(self.send_enpassant, self.recieve_enpassant), 
-                           (self.send_promote, self.recieve_promote)]
-
-    def send_enpassant(self):
-        pass
-    
-    def recieve_enpassant(self):
-        pass
-
-    def send_promote(self):
-        pass
-
-    def recieve_promote(self):
-        pass
 
 class Rook(Piece):
     def __init__(self, team):
         super().__init__(team)
-        self.strides = [(1,0),(-1,0),(0,1),(0,-1)]
-        self.steps = []
-        self.specials = []
 
 class Knight(Piece):
     def __init__(self, team):
         super().__init__(team)
-        self.strides = []
-        self.steps = [(2,1),(1,2),(-1,2),(-2,1),(-2,-1),(-1,-2),(1,-2),(2,-1)]
-        self.specials = []
 
 class Bishop(Piece):
     def __init__(self, team):
         super().__init__(team)
-        self.strides = [(1,1),(1,-1),(-1,-1),(-1,1)]
-        self.steps = []
-        self.specials = []
 
 class Queen(Piece):
     def __init__(self, team):
         super().__init__(team)
-        self.strides = [(1,1),(1,-1),(-1,-1),(-1,1),(1,0),(-1,0),(0,1),(0,-1)]
-        self.steps = []
-        self.specials = []
 
 class King(Piece):
     def __init__(self, team):
         super().__init__(team)
-        self.strides = []
-        self.steps = [(1,1),(1,-1),(-1,-1),(-1,1),(1,0),(-1,0),(0,1),(0,-1)]
-        self.specials = [(self.send_castle, self.recieve_castle)]
-
-    def send_castle(self):
-        pass
-    
-    def recieve_castle(self):
-        pass
-
-    def check(self):
-        pass
