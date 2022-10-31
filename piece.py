@@ -1,5 +1,7 @@
 from constants import *
 
+
+
 class Piece:
     def __init__(self, team):
         self.team = team
@@ -93,3 +95,11 @@ class Queen(Piece):
 class King(Piece):
     def __init__(self, team):
         super().__init__(team)
+
+def Empty(team):
+    pass
+
+# a bit uggo. 
+piece_switch = {PAWN: Pawn, ROOK: Rook, KNIGHT: Knight, BISHOP: Bishop, QUEEN: Queen, KING: King, EMPTY: Empty}
+def make_piece(piece_type, team):
+    return piece_switch[piece_type](team)

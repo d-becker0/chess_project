@@ -16,8 +16,7 @@ BISHOP = 'b'
 QUEEN = 'q'
 KING = 'k'
 PAWN = 'p'
-
-EMPTY = ''
+EMPTY = '-'
 
 # Board constants
 
@@ -32,3 +31,10 @@ HEIGHT = 512
         # yes, making assumptions here
 SQUARE_SIZE = WIDTH // BOARD_ROWS
 
+# Color constants 
+
+BLACK_COLOR = (10,10,10)
+WHITE_COLOR = (230,230,230)
+
+DARK_SQUARE_COLOR = (100, 100, 180)
+LIGHT_SQUARE_COLOR = (170, 170, 250)

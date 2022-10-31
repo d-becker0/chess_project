@@ -14,18 +14,19 @@ class Player:
                 team_pieces.append(piece)
         return team_pieces
 
-
 class Game:
-    def __init__(self, board):
+    def __init__(self):
         self.turn = 0
-        self.board = board
+        self.past_boards = []
+
+    def increment_turn(self):
+        self.turn += 1
 
     def turn_to_team(self, turn):
         if turn%2:
             return WHITE
         else: 
             return BLACK
-        
 
 class Board:
     def __init__(self):
@@ -34,8 +35,7 @@ class Board:
 
         self.pieces = []
 
-        self.current_board = []
-        self.past_boards = []
+        self.board = []
 
         self._place_pieces()
 
@@ -44,16 +44,16 @@ class Board:
         middle_rows = BOARD_ROWS - 2
 
         # top row
-        self.current_board.append(self._initialize_row(self.piece_backpattern, BLACK))
+        self.board.append(self._initialize_row(self.piece_backpattern, BLACK))
         # 2nd to top row
-        self.current_board.append(self._initialize_row(self.piece_forepattern, BLACK))
+        self.board.append(self._initialize_row(self.piece_forepattern, BLACK))
 
         for i in range(2, middle_rows):
             
-            self.current_board.append([   make_piece(EMPTY, EMPTY) for j in range(BOARD_COLUMNS)   ])
+            self.board.append([   make_piece(EMPTY, EMPTY) for j in range(BOARD_COLUMNS)   ])
         
-        self.current_board.append(self._initialize_row(self.piece_forepattern, WHITE))
-        self.current_board.append(self._initialize_row(self.piece_backpattern, WHITE))
+        self.board.append(self._initialize_row(self.piece_forepattern, WHITE))
+        self.board.append(self._initialize_row(self.piece_backpattern, WHITE))
 
     def _initialize_row(self, pattern, team):
         row = []
@@ -66,9 +66,9 @@ class Board:
         return row
 
     def yield_coords_and_content(self):
-        for row_val, row in enumerate(self.current_board):
+        for row_val, row in enumerate(self.board):
             for col_val, content in enumerate(row):
-                yield (row_val,col_val), content
+                yield row_val, col_val, content
 
     def remove_piece(self, piece):
         self.pieces.remove(piece)
