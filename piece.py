@@ -120,15 +120,3 @@ class King(Piece):
             self.image = 'images/wK.png'
         else:
             self.image = 'images/bK.png'
-
-class EmptySquare:
-    def __init__(self, team):
-        self.team = team
-        self.image = None
-
-
-
-# a bit uggo. 
-piece_switch = {PAWN: Pawn, ROOK: Rook, KNIGHT: Knight, BISHOP: Bishop, QUEEN: Queen, KING: King, EMPTY: EmptySquare}
-def make_piece(piece_type, team):
-    return piece_switch[piece_type](team)

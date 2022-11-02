@@ -35,5 +35,4 @@ if __name__ == "__main__":
                 board.update(row, column, piece)
                 
                 game.increment_turn()
-                print(game.turn)
                 display.end_of_turn(board)
