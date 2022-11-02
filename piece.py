@@ -5,19 +5,23 @@ class Piece:
         self.team = team
         self.has_moved = False
         self.moved_last = False
+        self.row = None
+        self.column = None
 
         # each direction in format (dir_x, dir_y, max_length_in_direction)
         self.directions = []
         self.orientation = 1 if team == WHITE else -1  # orients pawns by team -- other pieces have symmetry
+    
+    def initialize_position_and_moves(self, row, column, board):
+        self.row = row
+        self.column = column
+        self.reachable_moves, self.blocked_moves = self.calculate_moves(board)
 
-    def initialize_moveset(self, row, column, board):
-        self.move_set = self._get_moves(row, column, board)
-
-    def _get_moves(self, row, column, board):
+    def calculate_moves(self, board):
         if self.has_moved:
-            reachable_squares, blocked_squares = self._get_reachable_and_blocked_squares(row, column, board)
+            reachable_squares, blocked_squares = self._get_reachable_and_blocked_squares(board)
         else:
-            reachable_squares, blocked_squares = self.on_first_move(row, column, board)
+            reachable_squares, blocked_squares = self.on_first_move(board)
         
         return reachable_squares, blocked_squares
         
@@ -26,26 +30,31 @@ class Piece:
         reachable_squares = []
         blocked_squares = []
         for direction in self.directions:
-
             can_continue = True
             for distance in range(BOARD_DIM):
-                x,y = self._get_squares_from_vector(direction, distance)
+                row, column = self._get_squares_from_vector(direction, distance)
 
-                square_content = board.get_square_content(x,y)
+                square = board[row][column]
 
-                team = square_content.team
+                if square.piece:
+                    team = square.piece.team
+                else:
+                    team = EMPTY
 
                 if self._can_reach_square(team):
                     if can_continue:
-                        reachable_squares.append((x,y))
+                        reachable_squares.append((row, column))
                     else:
-                        blocked_squares.append((x,y))
+                        blocked_squares.append((row, column))
 
                 # must come after _can_reach_square
                 if not self._can_go_further(team):
                     can_continue = False
             
-            return reachable_squares, blocked_squares
+        for single_move in self.single_moves:
+            pass
+            
+        return reachable_squares, blocked_squares
 
     def _can_reach_square(self, team):
         if team == self.team:
@@ -64,8 +73,8 @@ class Piece:
         return self.position[0]+dx, self.position[1]+dy
 
     # basic behavior for pieces, must redefine for king and pawn
-    def on_first_move(self, row, column, board):
-        return self._get_reachable_and_blocked_squares(row, column, board)
+    def on_first_move(self, board):
+        return self._get_reachable_and_blocked_squares(board)
 
     def on_turn_end(self):
         pass

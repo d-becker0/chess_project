@@ -39,7 +39,7 @@ if __name__ == "__main__":
                 selection = square
                 selected_coords = (row, column)
             
-            elif (selection) and ( (row, column) in selection.move_squares ):
+            elif (selection) and ( (row, column) in selection.piece.reachable_moves ):
                 board.update(row, column, selection)
                 
                 game.increment_turn()
