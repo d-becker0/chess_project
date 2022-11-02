@@ -6,21 +6,18 @@ class Piece:
         self.has_moved = False
         self.moved_last = False
 
-        self.position = ()
-
         # each direction in format (dir_x, dir_y, max_length_in_direction)
         self.directions = []
-
         self.orientation = 1 if team == WHITE else -1  # orients pawns by team -- other pieces have symmetry
 
-    def initialize_moveset(self, board):
-        self.move_set = self._get_moves(board)
+    def initialize_moveset(self, row, column, board):
+        self.move_set = self._get_moves(row, column, board)
 
-    def _get_moves(self, board):
+    def _get_moves(self, row, column, board):
         if self.has_moved:
-            reachable_squares, blocked_squares = self._get_reachable_and_blocked_squares(board)
+            reachable_squares, blocked_squares = self._get_reachable_and_blocked_squares(row, column, board)
         else:
-            reachable_squares, blocked_squares = self.on_first_move()
+            reachable_squares, blocked_squares = self.on_first_move(row, column, board)
         
         return reachable_squares, blocked_squares
         
@@ -31,7 +28,7 @@ class Piece:
         for direction in self.directions:
 
             can_continue = True
-            for distance in range(direction[2]):
+            for distance in range(BOARD_DIM):
                 x,y = self._get_squares_from_vector(direction, distance)
 
                 square_content = board.get_square_content(x,y)
@@ -67,8 +64,8 @@ class Piece:
         return self.position[0]+dx, self.position[1]+dy
 
     # basic behavior for pieces, must redefine for king and pawn
-    def on_first_move(self,board):
-        return self._get_reachable_and_blocked_squares(board)
+    def on_first_move(self, row, column, board):
+        return self._get_reachable_and_blocked_squares(row, column, board)
 
     def on_turn_end(self):
         pass

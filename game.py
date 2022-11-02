@@ -1,5 +1,4 @@
 from constants import *
-
 class Player:
     def __init__(self, team, all_pieces):
         self.team = team
@@ -22,6 +21,6 @@ class Game:
 
     def turn_to_team(self, turn):
         if turn % 2:
-            return WHITE
-        else: 
             return BLACK
+        else: 
+            return WHITE

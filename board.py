@@ -2,7 +2,7 @@ from constants import *
 
 class Square:
     def __init__(self):
-        self.content = None
+        self.piece = None
         self.blocked_for_pieces = []
         self.reached_by_pieces = []
 
@@ -52,16 +52,16 @@ class Board:
         row = []
         for piece_type in pattern:
 
-            piece = setup_square(piece_type,team)
-            row.append(piece)
-            self.pieces.append(piece)
+            square = setup_square(piece_type, team)
+            row.append(square)
+            self.pieces.append(square.piece)
 
         return row
 
-    def yield_coords_and_content(self):
+    def yield_coords_and_piece(self):
         for row_val, row in enumerate(self.board):
             for col_val, square in enumerate(row):
-                yield row_val, col_val, square.content
+                yield row_val, col_val, square.piece
 
 # a bit uggo. 
 from piece import Pawn, Rook, Knight, Bishop, Queen, King
@@ -72,5 +72,5 @@ def _fill_square(piece_type, team):
 def setup_square(piece_type, team):
     square = Square()
     if piece_type != EMPTY:
-        square.content = _fill_square( piece_switch[piece_type](team) )
+        square.piece = _fill_square(piece_type, team)
     return square

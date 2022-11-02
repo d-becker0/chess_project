@@ -44,8 +44,12 @@ class Display:
         for row in range(BOARD_ROWS):
             for column in range(BOARD_COLUMNS):
                 color = self._choose_color(row, column)
-                square_coords_and_dims = self._create_square_coords_and_dims(row, column)
-                pygame.draw.rect(self.screen, color, square_coords_and_dims)
+                self._draw_tile(row, column, color)
+                
+
+    def _draw_tile(self, row, column, color):
+        square_coords_and_dims = self._create_square_coords_and_dims(row, column)
+        pygame.draw.rect(self.screen, color, square_coords_and_dims)
 
     def _choose_color(self, row, column):
         if (row + column) % 2 == 0:
@@ -72,10 +76,24 @@ class Display:
         pygame.display.update()
 
     def _draw_pieces(self, board):
-        for row, column, piece in board.yield_coords_and_content():
+        for row, column, piece in board.yield_coords_and_piece():
+            self._draw_piece(row, column, piece)
+
+    def _draw_piece(self, row, column, piece):
+        if piece and piece.image:
             position_left, position_top = self._piece_coords_by_square(row,column)
-            if piece.image:
-                self.screen.blit(  self._load_image(piece.image), (position_left, position_top)  )
+            self.screen.blit(  self._load_image(piece.image), (position_left, position_top)  )
+
+    def draw_selection(self, row, column, selection):
+        self._draw_tile(row, column, PRIMARY_HIGHLIGHT)
+        self._draw_piece(row, column, selection.piece)
+        pygame.display.update()
+
+    def unhighlight(self, row, column, unselected):
+        self._draw_tile(row, column, self._choose_color(row, column))
+        if unselected: # pass when a tile hasn't been selected before and unselected is non
+            self._draw_piece(row, column, unselected.piece)
+        pygame.display.update()
 
     def _load_image(self, image_path):
         return pygame.image.load(image_path)
