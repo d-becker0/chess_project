@@ -27,13 +27,14 @@ class Interface:
     
     def _handle_click(self, event):
         x,y = event.pos
-        return x, y
+        return x // SQUARE_SIZE, y // SQUARE_SIZE
 
 
 class Display:
     def __init__(self, single_player = True):
         pygame.init()
         self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
+        pygame.display.set_caption('Chess')
         self.screen.fill(pygame.Color("white"))
 
         self.single_player = single_player
@@ -48,9 +49,9 @@ class Display:
 
     def _choose_color(self, row, column):
         if (row + column) % 2 == 0:
-            return DARK_SQUARE_COLOR
-        else:
             return LIGHT_SQUARE_COLOR
+        else:
+            return DARK_SQUARE_COLOR
 
     def _create_square_coords_and_dims(self, row, column):
         # left, top, height, width (I think thats the order lol)
@@ -58,7 +59,7 @@ class Display:
 
     def _piece_coords_by_square(self, row, column):
         left, top, height, width = self._create_square_coords_and_dims(row, column)
-        return (left + 1/2 * SQUARE_SIZE, top - 1/2 * SQUARE_SIZE)
+        return left,top
     
     def end_of_turn(self, board):
         self._draw_all(board)
@@ -68,15 +69,19 @@ class Display:
         self._draw_tiles()
         self._draw_pieces(board)
         # self._draw_overlay()
+        pygame.display.update()
 
     def _draw_pieces(self, board):
         for row, column, piece in board.yield_coords_and_content():
             position_left, position_top = self._piece_coords_by_square(row,column)
-            #self.screen.blit(piece.image, (position_left, position_top))
+            if piece.image:
+                self.screen.blit(  self._load_image(piece.image), (position_left, position_top)  )
 
+    def _load_image(self, image_path):
+        return pygame.image.load(image_path)
 
     def _change_orientation(self):
-        if self.single_player:
+        if self.single_player == False:
             pygame.display.flip()
 
     def reset_board(self):

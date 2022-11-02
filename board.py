@@ -23,7 +23,7 @@ class Game:
         self.turn += 1
 
     def turn_to_team(self, turn):
-        if turn%2:
+        if turn % 2:
             return WHITE
         else: 
             return BLACK
