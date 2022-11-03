@@ -45,7 +45,6 @@ class Display:
             for column in range(BOARD_COLUMNS):
                 color = self._choose_color(row, column)
                 self._draw_tile(row, column, color)
-                
 
     def _draw_tile(self, row, column, color):
         square_coords_and_dims = self._create_square_coords_and_dims(row, column)
@@ -72,7 +71,6 @@ class Display:
     def _draw_all(self, board):
         self._draw_tiles()
         self._draw_pieces(board)
-        # self._draw_overlay()
         pygame.display.update()
 
     def _draw_pieces(self, board):
@@ -84,9 +82,25 @@ class Display:
             position_left, position_top = self._piece_coords_by_square(row,column)
             self.screen.blit(  self._load_image(piece.image), (position_left, position_top)  )
 
-    def draw_selection(self, row, column, selection):
+    def draw_selection(self, row, column, selection, board):
         self._draw_tile(row, column, PRIMARY_HIGHLIGHT)
         self._draw_piece(row, column, selection.piece)
+
+        print("Piece at -- row:", row, "column:", column)
+
+        for move in selection.piece.reachable_moves:
+            row, column = move
+            square = board[row][column]
+            self._draw_tile(row, column, SECONDARY_HIGHLIGHT)
+            self._draw_piece(row, column, square.piece)
+
+            print("Can move to -- row:", row, "column:", column)
+        
+        # debug
+        for move in selection.piece.blocked_moves:
+            row, column = move
+            print("Can move to -- row:", row, "column:", column)
+
         pygame.display.update()
 
     def unhighlight(self, row, column, unselected):
@@ -101,6 +115,3 @@ class Display:
     def _change_orientation(self):
         if self.single_player == False:
             pygame.display.flip()
-
-    def reset_board(self):
-        pass

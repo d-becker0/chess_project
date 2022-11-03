@@ -14,14 +14,13 @@ if __name__ == "__main__":
 
     display._draw_all(board)
 
-    running = True
     selection = None
     selected_coords = None
+    running = True
 
     while running:
         
         current_team = game.turn_to_team(game.turn)
-
         pos = interface.event_loop()
 
         if pos:
@@ -33,7 +32,7 @@ if __name__ == "__main__":
                 if selected_coords:
                     display.unhighlight(selected_coords[0], selected_coords[1], selection)
                 
-                display.draw_selection(row, column, square)
+                display.draw_selection(row, column, square, board.board)
                 
                 # New selected square
                 selection = square
@@ -44,3 +43,6 @@ if __name__ == "__main__":
                 
                 game.increment_turn()
                 display.end_of_turn(board)
+
+                selection = None
+                selected_coords = None
