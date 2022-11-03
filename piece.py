@@ -34,7 +34,7 @@ class Piece:
             reachable_squares, blocked_squares = self.on_first_move(board)
         self._set_moves(reachable_squares, blocked_squares)
 
-    # TODO: Refactor
+    # TODO: Refactor, a bit repetitive and messy
     def _get_reachable_and_blocked_squares(self, board):
         reachable_squares = []
         blocked_squares = []

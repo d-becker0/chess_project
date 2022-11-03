@@ -10,10 +10,12 @@ class Square:
     def update_pieces(self, board):
         visited = {}
         for piece in self.blocked_for_pieces:
+            print(piece)
             if piece not in visited:
                 piece.calculate_and_set_moves(board)
         for piece in self.reached_by_pieces:
             if piece not in visited:
+                print(piece)
                 piece.calculate_and_set_moves(board)
         print("Recalculated moves:",visited)
 
@@ -43,6 +45,7 @@ class Board:
 
         self._setup_board()
         self._initialize_piece_moves()
+        self._subscribe_squares_to_pieces()
 
     def update(self, row, column, team_piece_square):
         piece = team_piece_square.piece
@@ -77,6 +80,14 @@ class Board:
         for row, column, piece in self.yield_coords_and_piece():
             if piece:
                 piece.move(row, column, self.board)
+
+    def _subscribe_squares_to_pieces(self):
+        for row, column, piece in self.yield_coords_and_piece():
+            if piece:
+                for (move_row, move_column) in piece.reachable_squares:
+                    self.board[move_row][move_column].reached_by_pieces.append(piece)
+                for (move_row, move_column) in piece.blocked_squares:
+                    self.board[move_row][move_column].blocked_for_pieces.append(piece)
 
     def _initialize_row(self, pattern, team):
         row = []
