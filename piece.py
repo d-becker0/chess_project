@@ -11,7 +11,7 @@ class Piece:
         # each direction in format (dir_x, dir_y, max_length_in_direction)
         self.single_moves = []
         self.directional_moves = []
-        self.orientation = 1 if team == WHITE else -1  # orients pawns by team -- other pieces have symmetry
+        self.orientation = -1 if team == WHITE else 1  # orients pawns by team -- other pieces have symmetry
 
     def move(self, row, column, board):
         self.row = row
@@ -20,12 +20,10 @@ class Piece:
         self.calculate_and_set_moves(board)
     
     def _reset_moves(self):
-        self.reachable_moves = []
-        self.blocked_moves = []
+        self.reachable_squares = []
+        self.blocked_squares = []
 
     def _set_moves(self, reachable_squares, blocked_squares):
-        print(reachable_squares)
-        print(blocked_squares)
         self.reachable_squares = reachable_squares
         self.blocked_squares = blocked_squares
 
@@ -36,15 +34,16 @@ class Piece:
             reachable_squares, blocked_squares = self.on_first_move(board)
         self._set_moves(reachable_squares, blocked_squares)
 
+    # TODO: Refactor
     def _get_reachable_and_blocked_squares(self, board):
         reachable_squares = []
         blocked_squares = []
         for direction in self.directional_moves:
             can_continue = True
-            for distance in range(BOARD_DIM):
+            for distance in range(1, 1 + BOARD_DIM):
                 row, column = self._get_square_from_vector(direction, distance)
                 if not self._on_board(row, column):
-                    continue
+                    break
 
                 square = board[row][column]
                 team = self._team_from_square(square)
@@ -58,7 +57,10 @@ class Piece:
 
                 # must come after _can_reach_square
                 if not self._can_go_further(team):
-                    can_continue = False
+                    if can_continue:
+                        can_continue = False
+                    else:
+                        break
             
         for single_move in self.single_moves:
             row, column = self._get_square_from_vector(single_move, 1)

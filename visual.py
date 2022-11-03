@@ -86,20 +86,16 @@ class Display:
         self._draw_tile(row, column, PRIMARY_HIGHLIGHT)
         self._draw_piece(row, column, selection.piece)
 
+        # debug
         print("Piece at -- row:", row, "column:", column)
+        print("Piece's moves -- ", str(selection.piece.reachable_squares))
+        print("Piece blocked for --", str(selection.piece.blocked_squares))
 
-        for move in selection.piece.reachable_moves:
+        for move in selection.piece.reachable_squares:
             row, column = move
             square = board[row][column]
             self._draw_tile(row, column, SECONDARY_HIGHLIGHT)
             self._draw_piece(row, column, square.piece)
-
-            print("Can move to -- row:", row, "column:", column)
-        
-        # debug
-        for move in selection.piece.blocked_moves:
-            row, column = move
-            print("Can move to -- row:", row, "column:", column)
 
         pygame.display.update()
 

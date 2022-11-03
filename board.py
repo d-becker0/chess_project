@@ -51,7 +51,7 @@ class Board:
         new_square.piece = piece
         team_piece_square.piece = None
 
-        piece.move(row, column)
+        piece.move(row, column, self.board)
 
         new_square.update_pieces()
         team_piece_square.update_pieces()
