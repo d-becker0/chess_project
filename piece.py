@@ -16,6 +16,7 @@ class Piece:
     def move(self, row, column, board):
         self.row = row
         self.column = column
+        self.has_moved = True
         self._reset_moves()
         self.calculate_and_set_moves(board)
     
@@ -42,18 +43,17 @@ class Piece:
             can_continue = True
             for distance in range(1, 1 + BOARD_DIM):
                 row, column = self._get_square_from_vector(direction, distance)
-                if not self._on_board(row, column):
+                if not self._legal_move(row, column, board):
                     break
 
-                square = board[row][column]
-                team = self._team_from_square(square)
-
-                # only reachable if other team / empty and hasn't encountered side 
-                # and hasn't hit piece of same team
-                if self._can_take_square(team) and can_continue:
+                if self._reachable_or_blocked(row, column, board) and can_continue:
                     reachable_squares.append((row, column))
                 else:
                     blocked_squares.append((row, column))
+
+                # I don't like this, since team is already calculated in _reachable_or_blocked
+                square = board[row][column]
+                team = self._team_from_square(square)
 
                 # must come after _can_reach_square
                 if not self._can_go_further(team):
@@ -64,12 +64,11 @@ class Piece:
             
         for single_move in self.single_moves:
             row, column = self._get_square_from_vector(single_move, 1)
-            if not self._on_board(row, column):
+
+            if not self._legal_move(row, column, board):
                 continue
 
-            square = board[row][column]
-            team = self._team_from_square(square)
-            if self._can_take_square(team):
+            if self._reachable_or_blocked(row, column, board):
                 reachable_squares.append((row, column))
             else:
                 blocked_squares.append((row, column))
@@ -82,6 +81,20 @@ class Piece:
         else:
             team = EMPTY
         return team
+
+    def _reachable_or_blocked(self, row, column, board):
+        square = board[row][column]
+        team = self._team_from_square(square)
+        if self._can_take_square(team):
+            return True
+        else:
+            return False
+
+
+    def _legal_move(self, row, column, board):
+        if self._on_board(row, column):
+            return True
+        return False
     
     def _on_board(self, row, column):
         if row >= 0 and row < BOARD_ROWS:
@@ -121,8 +134,25 @@ class Pawn(Piece):
             self.image = 'images/bp.png'
         self.single_moves = [(0,1)]
 
-        def on_first_move(self, board):
-            pass
+    def on_first_move(self, board):
+        reachable_squares, blocked_squares = self._get_reachable_and_blocked_squares(board)
+        
+        if not reachable_squares:
+            return reachable_squares, blocked_squares
+
+        square = reachable_squares[0]
+        two_move_row = square[0] + self.orientation 
+        two_move_column = square[1] # column doesn't change
+
+        if self._legal_move(two_move_row, two_move_column, board):
+            if self._reachable_or_blocked(two_move_row, two_move_column, board):
+                reachable_squares.append((two_move_row, two_move_column))
+            else:
+                blocked_squares.append((two_move_row, two_move_column))
+
+        return reachable_squares, blocked_squares
+
+
 
 class Rook(Piece):
     def __init__(self, team):

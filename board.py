@@ -8,16 +8,16 @@ class Square:
 
     # only recalculate pieces that interact with previous and new square
     def update_pieces(self, board):
-        visited = {}
+        visited = []
         for piece in self.blocked_for_pieces:
-            print(piece)
             if piece not in visited:
                 piece.calculate_and_set_moves(board)
+                visited.append(piece)
         for piece in self.reached_by_pieces:
             if piece not in visited:
-                print(piece)
                 piece.calculate_and_set_moves(board)
-        print("Recalculated moves:",visited)
+                visited.append(piece)
+        print("Recalculated:",str(visited))
 
     def square_is_blocked(self, piece):
         if piece in self.blocked_for_pieces:
@@ -45,7 +45,7 @@ class Board:
 
         self._setup_board()
         self._initialize_piece_moves()
-        self._subscribe_squares_to_pieces()
+        self._subscribe_pieces_to_squares()
 
     def update(self, row, column, team_piece_square):
         piece = team_piece_square.piece
@@ -55,10 +55,11 @@ class Board:
         new_square.piece = piece
         team_piece_square.piece = None
 
-        piece.move(row, column, self.board)
-
         new_square.update_pieces(self.board)
         team_piece_square.update_pieces(self.board)
+
+        # right now, this has to come after updating other pieces
+        piece.move(row, column, self.board)
 
     # board setup
     def _setup_board(self):
@@ -79,9 +80,11 @@ class Board:
     def _initialize_piece_moves(self):
         for row, column, piece in self.yield_coords_and_piece():
             if piece:
-                piece.move(row, column, self.board)
+                piece.row = row
+                piece.column = column
+                piece.calculate_and_set_moves(self.board)
 
-    def _subscribe_squares_to_pieces(self):
+    def _subscribe_pieces_to_squares(self):
         for row, column, piece in self.yield_coords_and_piece():
             if piece:
                 for (move_row, move_column) in piece.reachable_squares:
