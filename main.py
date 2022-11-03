@@ -30,7 +30,7 @@ if __name__ == "__main__":
             if (square.piece) and ( square.piece.team == current_team ):
                 # previous selection
                 if selected_coords:
-                    display.unhighlight(selected_coords[0], selected_coords[1], selection)
+                    display.unhighlight(selected_coords[0], selected_coords[1], selection, board.board)
                 
                 display.draw_selection(row, column, square, board.board)
                 

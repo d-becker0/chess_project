@@ -70,10 +70,10 @@ class Display:
 
     def _draw_all(self, board):
         self._draw_tiles()
-        self._draw_pieces(board)
+        self._draw_all_pieces(board)
         pygame.display.update()
 
-    def _draw_pieces(self, board):
+    def _draw_all_pieces(self, board):
         for row, column, piece in board.yield_coords_and_piece():
             self._draw_piece(row, column, piece)
 
@@ -99,11 +99,19 @@ class Display:
 
         pygame.display.update()
 
-    def unhighlight(self, row, column, unselected):
+    def unhighlight(self, row, column, unselected, board):
         self._draw_tile(row, column, self._choose_color(row, column))
-        if unselected: # pass when a tile hasn't been selected before and unselected is non
-            self._draw_piece(row, column, unselected.piece)
+        self._draw_piece(row, column, unselected.piece)
+
+        for move in unselected.piece.reachable_squares:
+            row, column = move
+            square = board[row][column]
+            self._draw_tile(row, column, self._choose_color(row, column))
+            self._draw_piece(row, column, square.piece)
+            
         pygame.display.update()
+
+        
 
     def _load_image(self, image_path):
         return pygame.image.load(image_path)
