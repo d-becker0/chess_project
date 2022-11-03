@@ -7,14 +7,15 @@ class Square:
         self.reached_by_pieces = []
 
     # only recalculate pieces that interact with previous and new square
-    def update_pieces(self):
+    def update_pieces(self, board):
         visited = {}
         for piece in self.blocked_for_pieces:
             if piece not in visited:
-                piece.calculate_and_set_moves()
+                piece.calculate_and_set_moves(board)
         for piece in self.reached_by_pieces:
             if piece not in visited:
-                piece.calculate_and_set_moves()
+                piece.calculate_and_set_moves(board)
+        print("Recalculated moves:",visited)
 
     def square_is_blocked(self, piece):
         if piece in self.blocked_for_pieces:
@@ -53,8 +54,8 @@ class Board:
 
         piece.move(row, column, self.board)
 
-        new_square.update_pieces()
-        team_piece_square.update_pieces()
+        new_square.update_pieces(self.board)
+        team_piece_square.update_pieces(self.board)
 
     # board setup
     def _setup_board(self):
