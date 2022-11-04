@@ -6,18 +6,21 @@ class Square:
         self.blocked_for_pieces = []
         self.reached_by_pieces = []
 
-    # only recalculate pieces that interact with previous and new square
-    def update_pieces(self, board):
+    # only recalculate moves of pieces that interact with previous and new square
+    def get_pieces_to_update(self):
         visited = []
         for piece in self.blocked_for_pieces:
             if piece not in visited:
-                piece.calculate_and_set_moves(board)
                 visited.append(piece)
         for piece in self.reached_by_pieces:
             if piece not in visited:
-                piece.calculate_and_set_moves(board)
                 visited.append(piece)
         print("Recalculated:",str(visited))
+        return visited
+        
+    def reset_subscriptions(self):
+        self.blocked_for_pieces = []
+        self.reached_by_pieces = []
 
     def square_is_blocked(self, piece):
         if piece in self.blocked_for_pieces:
@@ -45,21 +48,35 @@ class Board:
 
         self._setup_board()
         self._initialize_piece_moves()
-        self._subscribe_pieces_to_squares()
+        self._subscribe_pieces_to_squares(self.pieces)
 
-    def update(self, row, column, team_piece_square):
-        piece = team_piece_square.piece
+
+    # TODO: lots of redundancy to reduce
+
+    def update(self, row, column, piece_square):
+        piece = piece_square.piece
 
         new_square = self.board[row][column]
 
         new_square.piece = piece
-        team_piece_square.piece = None
-
-        new_square.update_pieces(self.board)
-        team_piece_square.update_pieces(self.board)
+        piece_square.piece = None
 
         # right now, this has to come after updating other pieces
         piece.move(row, column, self.board)
+
+        update_pieces = new_square.get_pieces_to_update()
+        update_pieces.extend( piece_square.get_pieces_to_update() )
+
+        for piece_to_update in update_pieces:
+            reachable_squares, blocked_squares = piece_to_update.get_reachable_and_blocked_coords(self.board)
+            piece_to_update.set_moves(reachable_squares, blocked_squares)
+
+        new_square.reset_subscriptions()
+        piece_square.reset_subscriptions()
+
+        self._subscribe_pieces_to_squares(update_pieces)
+
+        
 
     # board setup
     def _setup_board(self):
@@ -82,15 +99,20 @@ class Board:
             if piece:
                 piece.row = row
                 piece.column = column
-                piece.calculate_and_set_moves(self.board)
+                reachable_squares, blocked_squares = piece.get_reachable_and_blocked_coords(self.board)
+                piece.set_moves(reachable_squares, blocked_squares)
 
-    def _subscribe_pieces_to_squares(self):
-        for row, column, piece in self.yield_coords_and_piece():
-            if piece:
-                for (move_row, move_column) in piece.reachable_squares:
-                    self.board[move_row][move_column].reached_by_pieces.append(piece)
-                for (move_row, move_column) in piece.blocked_squares:
-                    self.board[move_row][move_column].blocked_for_pieces.append(piece)
+    def _subscribe_pieces_to_squares(self, pieces):
+        for piece in pieces:
+            self._subscribe_single_piece_to_squares(piece)
+            
+    def _subscribe_single_piece_to_squares(self, piece):
+        if piece:
+            for (move_row, move_column) in piece.reachable_squares:
+                self.board[move_row][move_column].reached_by_pieces.append(piece)
+            for (move_row, move_column) in piece.blocked_squares:
+                self.board[move_row][move_column].blocked_for_pieces.append(piece)
+
 
     def _initialize_row(self, pattern, team):
         row = []

@@ -18,22 +18,23 @@ class Piece:
         self.column = column
         self.has_moved = True
         self._reset_moves()
-        self.calculate_and_set_moves(board)
+        reachable_squares, blocked_squares = self.get_reachable_and_blocked_coords(board)
+        self.set_moves(reachable_squares, blocked_squares)
     
     def _reset_moves(self):
         self.reachable_squares = []
         self.blocked_squares = []
 
-    def _set_moves(self, reachable_squares, blocked_squares):
+    def set_moves(self, reachable_squares, blocked_squares):
         self.reachable_squares = reachable_squares
         self.blocked_squares = blocked_squares
 
-    def calculate_and_set_moves(self, board):
+    def get_reachable_and_blocked_coords(self, board):
         if self.has_moved:
             reachable_squares, blocked_squares = self._get_reachable_and_blocked_squares(board)
         else:
             reachable_squares, blocked_squares = self.on_first_move(board)
-        self._set_moves(reachable_squares, blocked_squares)
+        return reachable_squares, blocked_squares
 
     # TODO: Refactor, a bit repetitive and messy
     def _get_reachable_and_blocked_squares(self, board):
@@ -85,11 +86,9 @@ class Piece:
     def _reachable_or_blocked(self, row, column, board):
         square = board[row][column]
         team = self._team_from_square(square)
-        if self._can_take_square(team):
+        if self._can_take_square(row, column, team):
             return True
-        else:
-            return False
-
+        return False
 
     def _legal_move(self, row, column, board):
         if self._on_board(row, column):
@@ -102,11 +101,6 @@ class Piece:
                 return True
         return False
 
-    def _can_take_square(self, team):
-        if team == self.team:
-            return False
-        return True
-
     def _can_go_further(self, team):
         if team == EMPTY: # piece cannot go to squares when any piece (regardless of team) blocks access
             return True
@@ -118,9 +112,17 @@ class Piece:
         
         return self.row + dy, self.column + dx
 
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
     # basic behavior for pieces, must redefine for king and pawn
     def on_first_move(self, board):
         return self._get_reachable_and_blocked_squares(board)
+
+    def _can_take_square(self, row, column, team):
+        if team == self.team:
+            return False
+        return True
 
     def on_turn_end(self):
         pass
@@ -132,7 +134,7 @@ class Pawn(Piece):
             self.image = 'images/wp.png'
         else:
             self.image = 'images/bp.png'
-        self.single_moves = [(0,1)]
+        self.single_moves = [(0,1), (1,1), (-1,1)]
 
     def on_first_move(self, board):
         reachable_squares, blocked_squares = self._get_reachable_and_blocked_squares(board)
@@ -152,7 +154,25 @@ class Pawn(Piece):
 
         return reachable_squares, blocked_squares
 
+    # must be other team piece on forward facing diagonal of pawn
+    # diagonals will count as blocked until opposing piece in square
+    def _can_take_square(self, row, column, team):
+        other_team_on_square = (team != self.team and team != EMPTY)
 
+        # forward move logic
+        if team == EMPTY and self.column == column:
+            return True
+
+        # diagonal take logic
+        if other_team_on_square and self._is_diagonal_of_pawn(row, column):
+            return True
+        return False
+
+    def _is_diagonal_of_pawn(self, row, column):
+        if column == (self.column + 1) or column == (self.column - 1):
+            if row == (self.row + self.orientation):
+                return True
+        return False
 
 class Rook(Piece):
     def __init__(self, team):
