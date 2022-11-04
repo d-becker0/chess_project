@@ -61,7 +61,6 @@ class Board:
         new_square.piece = piece
         piece_square.piece = None
 
-        # right now, this has to come after updating other pieces
         piece.move(row, column, self.board)
 
         update_pieces = new_square.get_pieces_to_update()
