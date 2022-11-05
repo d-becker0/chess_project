@@ -17,7 +17,7 @@ class Piece:
         self.row = row
         self.column = column
         self.has_moved = True
-        self._reset_moves()
+        # self._reset_moves()
         reachable_squares, blocked_squares = self.get_reachable_and_blocked_coords(board)
         self.set_moves(reachable_squares, blocked_squares)
     
@@ -44,8 +44,9 @@ class Piece:
             can_continue = True
             for distance in range(1, 1 + BOARD_DIM):
                 row, column = self._get_square_from_vector(direction, distance)
+                
                 if not self._legal_move(row, column, board):
-                    break
+                    continue
 
                 if self._reachable_or_blocked(row, column, board) and can_continue:
                     reachable_squares.append((row, column))
@@ -83,6 +84,7 @@ class Piece:
             team = EMPTY
         return team
 
+    # true if reachable, false if blocked
     def _reachable_or_blocked(self, row, column, board):
         square = board[row][column]
         team = self._team_from_square(square)
@@ -91,9 +93,22 @@ class Piece:
         return False
 
     def _legal_move(self, row, column, board):
-        if self._on_board(row, column):
+        if self._on_board(row, column) and not self._results_in_check(row, column, board):
             return True
         return False
+
+    # TODO: ME
+    # So, square holds reachable by info and blocked for info...
+    # if king reachable by opponent it is currently in check
+    # if king blocked for opponent it is in check if a blocking piece moves
+    # for pieces in square.reached_by:
+    #                       piece must be moved to the row/cols leading to king,
+    #                       or take checking piece, 
+    #                       or move king out of row (into square reached_by no opponents)
+    # for pieces in square.blocked_for:
+    #                       piece
+    def _results_in_check(self, row, column, board):
+        pass
     
     def _on_board(self, row, column):
         if row >= 0 and row < BOARD_ROWS:

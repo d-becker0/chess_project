@@ -12,10 +12,15 @@ class Square:
         for piece in self.blocked_for_pieces:
             if piece not in visited:
                 visited.append(piece)
+
+                print("Recalculated", piece, "at position", str((piece.row, piece.column)))
+                
         for piece in self.reached_by_pieces:
             if piece not in visited:
                 visited.append(piece)
-        print("Recalculated:",str(visited))
+
+                print("Recalculated", piece, "at position", str((piece.row, piece.column)))
+
         return visited
         
     def reset_subscriptions(self):
