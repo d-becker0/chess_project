@@ -101,14 +101,70 @@ class Piece:
     # So, square holds reachable by info and blocked for info...
     # if king reachable by opponent it is currently in check
     # if king blocked for opponent it is in check if a blocking piece moves
-    # for pieces in square.reached_by:
-    #                       piece must be moved to the row/cols leading to king,
-    #                       or take checking piece, 
-    #                       or move king out of row (into square reached_by no opponents)
-    # for pieces in square.blocked_for:
-    #                       piece
+    # I think this would work:
+    #         check square king is on and collect opponent pieces
+    #         if king currently in check (reachable by opponents), legal moves must stop that
+    #         if king currently in blocked, legal moves must not change that
+
+    #         NAMES FOR PSEUDO CODE:
+    # let piece + potential move be denoted by mover, (row, col)
+    # let mover's team's king be denoted by king and square be king square
+    # let piece putting king in check be check piece
+    # let piece pinning mover in place be pin piece
+    #         PSEUDOCODE:
+    #     get check piece from king square reachable for  --> if none, skip next if
+    #     if mover in is not in check piece's reachable list
+    #              and (row, col) in check piece's reachable list:
+    #     (row, col) is legal for mover
+    #  
+    #     get pin piece from king square blocked by       --> if none, skip next if
+    #     if pin piece's reachable moves contains mover
+    #              and (row, col) NOT in pin piece's reachable/blocked moves:
+    #     (row, col) is not legal
+
     def _results_in_check(self, row, column, board):
-        pass
+        king_square = self._find_king_square(board)
+        if not king_square:
+            return True
+
+        # assume move is legal
+        check_legal = True
+        pin_legal = True
+        for checking_piece in king_square.reached_by_pieces:
+            if checking_piece.team == self.team:
+                continue
+            if (row, column) in checking_piece.reachable_squares:    # does the current move block a check?
+                check_legal = True
+            elif (row, column) == (checking_piece.row, checking_piece.column): # does current move take checking piece?
+                check_legal = True
+            elif isinstance(self, King):       # if row, col not reached by opponents, but piece is king, then king can move
+                check_legal = True
+            else:
+                print("Checking piece:",checking_piece)
+                check_legal = False            # piece doesn't block/change check
+                break
+        
+        for pinning_piece in king_square.blocked_for_pieces:
+            if pinning_piece.team == self.team:
+                continue
+            if (row, column) in pinning_piece.reachable_squares:  # moving piece will still block pinning piece
+                pin_legal = True
+            elif (row, column) in pinning_piece.blocked_squares: 
+                pin_legal = True
+            else:
+                print("Pinning piece:",pinning_piece)
+                pin_legal = False
+        
+        if check_legal and pin_legal:
+            return False
+        print(self.team, "CHECK", "| from pin:", str(not pin_legal), "| from check:", str(not pin_legal))
+        return True
+
+    def _find_king_square(self, board):
+        for row in board:
+            for square in row:
+                if square.piece and square.piece.team == self.team and isinstance(square.piece, King):
+                    return square
     
     def _on_board(self, row, column):
         if row >= 0 and row < BOARD_ROWS:
@@ -170,7 +226,7 @@ class Pawn(Piece):
         return reachable_squares, blocked_squares
 
     # must be other team piece on forward facing diagonal of pawn
-    # diagonals will count as blocked until opposing piece in square
+    # diagonals will count as blocked until opponent piece in square
     def _can_take_square(self, row, column, team):
         other_team_on_square = (team != self.team and team != EMPTY)
 

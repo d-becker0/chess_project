@@ -43,6 +43,6 @@ if __name__ == "__main__":
                 
                 game.increment_turn()
                 display.end_of_turn(board)
-
+                
                 selection = None
                 selected_coords = None
