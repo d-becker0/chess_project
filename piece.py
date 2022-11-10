@@ -1,7 +1,7 @@
 from constants import *
 
 class Piece:
-    def __init__(self, team):
+    def __init__(self, team, board):
         self.team = team
         self.has_moved = False
         self.moved_last = False
@@ -17,19 +17,18 @@ class Piece:
         self.row = row
         self.column = column
         self.has_moved = True
-        # self._reset_moves()
-        reachable_squares, blocked_squares = self.get_reachable_and_blocked_coords(board)
-        self.set_moves(reachable_squares, blocked_squares)
+        reachable_squares, blocked_squares = self._get_reachable_and_blocked_coords(board)
+        self._set_moves(reachable_squares, blocked_squares)
     
-    def _reset_moves(self):
-        self.reachable_squares = []
-        self.blocked_squares = []
+    def recalculate_moves(self, board):
+        reachable_squares, blocked_squares = self._get_reachable_and_blocked_coords(board)
+        self._set_moves(reachable_squares, blocked_squares)
 
-    def set_moves(self, reachable_squares, blocked_squares):
+    def _set_moves(self, reachable_squares, blocked_squares):
         self.reachable_squares = reachable_squares
         self.blocked_squares = blocked_squares
 
-    def get_reachable_and_blocked_coords(self, board):
+    def _get_reachable_and_blocked_coords(self, board):
         if self.has_moved:
             reachable_squares, blocked_squares = self._get_reachable_and_blocked_squares(board)
         else:
@@ -58,11 +57,11 @@ class Piece:
                 team = self._team_from_square(square)
 
                 # must come after _can_reach_square
-                if not self._can_go_further(team):
-                    if can_continue:
-                        can_continue = False
-                    else:
-                        break
+                # if not self._can_go_further(team):
+                #     if can_continue:
+                #         can_continue = False
+                #     else:
+                #         break
             
         for single_move in self.single_moves:
             row, column = self._get_square_from_vector(single_move, 1)
@@ -77,13 +76,6 @@ class Piece:
         
         return reachable_squares, blocked_squares
 
-    def _team_from_square(self, square):
-        if square.piece:
-            team = square.piece.team
-        else:
-            team = EMPTY
-        return team
-
     # true if reachable, false if blocked
     def _reachable_or_blocked(self, row, column, board):
         square = board[row][column]
@@ -97,75 +89,71 @@ class Piece:
             return True
         return False
 
-    # TODO: ME
-    # So, square holds reachable by info and blocked for info...
-    # if king reachable by opponent it is currently in check
-    # if king blocked for opponent it is in check if a blocking piece moves
-    # I think this would work:
-    #         check square king is on and collect opponent pieces
-    #         if king currently in check (reachable by opponents), legal moves must stop that
-    #         if king currently in blocked, legal moves must not change that
-
-    #         NAMES FOR PSEUDO CODE:
-    # let piece + potential move be denoted by mover, (row, col)
-    # let mover's team's king be denoted by king and square be king square
-    # let piece putting king in check be check piece
-    # let piece pinning mover in place be pin piece
-    #         PSEUDOCODE:
-    #     get check piece from king square reachable for  --> if none, skip next if
-    #     if mover in is not in check piece's reachable list
-    #              and (row, col) in check piece's reachable list:
-    #     (row, col) is legal for mover
-    #  
-    #     get pin piece from king square blocked by       --> if none, skip next if
-    #     if pin piece's reachable moves contains mover
-    #              and (row, col) NOT in pin piece's reachable/blocked moves:
-    #     (row, col) is not legal
-
     def _results_in_check(self, row, column, board):
-        king_square = self._find_king_square(board)
-        if not king_square:
+        king = self._find_king(board)
+        king_square = board[king.row][king.column]
+        
+        no_check = True
+        if self._moves_out_of_pin(row,column,board,king_square):
+            pass
+        
+        if self._not_blocking_check(row,column,board,king_square):
             return True
 
-        # assume move is legal
-        check_legal = True
-        pin_legal = True
-        for checking_piece in king_square.reached_by_pieces:
-            if checking_piece.team == self.team:
-                continue
-            if (row, column) in checking_piece.reachable_squares:    # does the current move block a check?
-                check_legal = True
-            elif (row, column) == (checking_piece.row, checking_piece.column): # does current move take checking piece?
-                check_legal = True
-            elif isinstance(self, King):       # if row, col not reached by opponents, but piece is king, then king can move
-                check_legal = True
-            else:
-                print("Checking piece:",checking_piece)
-                check_legal = False            # piece doesn't block/change check
-                break
-        
-        for pinning_piece in king_square.blocked_for_pieces:
-            if pinning_piece.team == self.team:
-                continue
-            if (row, column) in pinning_piece.reachable_squares:  # moving piece will still block pinning piece
-                pin_legal = True
-            elif (row, column) in pinning_piece.blocked_squares: 
-                pin_legal = True
-            else:
-                print("Pinning piece:",pinning_piece)
-                pin_legal = False
-        
-        if check_legal and pin_legal:
-            return False
-        print(self.team, "CHECK", "| from pin:", str(not pin_legal), "| from check:", str(not pin_legal))
-        return True
+        return False
 
-    def _find_king_square(self, board):
+    # a pin is when a piece is stuck in some position(s)
+    # because it blocks a check on the king
+    def _moves_out_of_pin(self, row, column, board, king_square):
+        check = False
+        for piece in king_square.blocked_for_pieces:
+            if piece.team == self.team:
+                continue
+            if (self.row, self.column) not in piece.reachable_squares:   # is self not "attacked" by piece
+                continue
+            # what if self is attacked by a piece, but not in between piece and king
+            if not self._is_between(king_square.piece, piece, self.row, self.column):
+                continue
+            if (row, column) in piece.reachable_squares or (row, column) in piece.blocked_squares:
+                check = False
+            else:
+                check = True   # moving self to (row, column) results in check
+        return check
+
+    # find if a certain coord is "between" attacker and victim piece (exists in attacker's legal moves)
+    def _is_between(attacker, victim, row, column):
+        row_diff = attacker.row - victim.row
+        column_diff = attacker.column - victim.column
+
+
+                
+    def _not_blocking_check(self, row, column, board, king_square):
+        check = False
+        for piece in king_square.reachable_by_pieces:
+            if piece.team == self.team:
+                continue
+            if (row, column) in piece.reachable_squares \
+                or (row, column) in piece.blocked_squares \
+                or (row, column) == (piece.row, piece.column):
+                check = False
+            else:
+                check = True   # moving self to (row, column) results in check
+        return check
+
+
+    def _find_king(self, board):
         for row in board:
             for square in row:
-                if square.piece and square.piece.team == self.team and isinstance(square.piece, King):
-                    return square
-    
+                if isinstance(square.piece, King) and square.piece.team == self.team:
+                    return square.piece
+
+    def _team_from_square(self, square):
+        if square.piece:
+            team = square.piece.team
+        else:
+            team = EMPTY
+        return team
+        
     def _on_board(self, row, column):
         if row >= 0 and row < BOARD_ROWS:
             if column >= 0 and column < BOARD_COLUMNS:
@@ -199,8 +187,8 @@ class Piece:
         pass
 
 class Pawn(Piece):
-    def __init__(self, team):
-        super().__init__(team)
+    def __init__(self, team, board):
+        super().__init__(team, board)
         if team == WHITE:
             self.image = 'images/wp.png'
         else:
@@ -246,8 +234,8 @@ class Pawn(Piece):
         return False
 
 class Rook(Piece):
-    def __init__(self, team):
-        super().__init__(team)
+    def __init__(self, team, board):
+        super().__init__(team, board)
         if team == WHITE:
             self.image = 'images/wR.png'
         else:
@@ -255,8 +243,8 @@ class Rook(Piece):
         self.directional_moves = [(1,0),(0,1),(-1,0),(0,-1)]
 
 class Knight(Piece):
-    def __init__(self, team):
-        super().__init__(team)
+    def __init__(self, team, board):
+        super().__init__(team, board)
         if team == WHITE:
             self.image = 'images/wN.png'
         else:
@@ -264,8 +252,8 @@ class Knight(Piece):
         self.single_moves = [(2,1),(2,-1),(-2,1),(-2,-1),(1,2),(1,-2),(-1,2),(-1,-2)]
 
 class Bishop(Piece):
-    def __init__(self, team):
-        super().__init__(team)
+    def __init__(self, team, board):
+        super().__init__(team, board)
         if team == WHITE:
             self.image = 'images/wB.png'
         else:
@@ -273,8 +261,8 @@ class Bishop(Piece):
         self.directional_moves = [(1,1),(1,-1),(-1,1),(-1,-1)]
 
 class Queen(Piece):
-    def __init__(self, team):
-        super().__init__(team)
+    def __init__(self, team, board):
+        super().__init__(team, board)
         if team == WHITE:
             self.image = 'images/wQ.png'
         else:
@@ -282,8 +270,8 @@ class Queen(Piece):
         self.directional_moves = [(1,0),(0,1),(-1,0),(0,-1),(1,1),(1,-1),(-1,1),(-1,-1)]
 
 class King(Piece):
-    def __init__(self, team):
-        super().__init__(team)
+    def __init__(self, team, board):
+        super().__init__(team, board)
         if team == WHITE:
             self.image = 'images/wK.png'
         else:

@@ -44,5 +44,15 @@ if __name__ == "__main__":
                 game.increment_turn()
                 display.end_of_turn(board)
                 
+                white_in_check = white.is_checked(board.board)
+                if white_in_check or (not white_in_check and white.was_in_check):
+                    white.was_in_checked = False
+                    white.recalculate_all(board.board)
+                
+                black_in_check = black.is_checked(board.boardz)
+                if black_in_check or (not black_in_check and black.was_in_check):
+                    black.king.is_checked = False
+                    black.recalculate_all(board.board)
+
                 selection = None
                 selected_coords = None

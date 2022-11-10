@@ -72,8 +72,7 @@ class Board:
         update_pieces.extend( piece_square.get_pieces_to_update() )
 
         for piece_to_update in update_pieces:
-            reachable_squares, blocked_squares = piece_to_update.get_reachable_and_blocked_coords(self.board)
-            piece_to_update.set_moves(reachable_squares, blocked_squares)
+            piece_to_update.recalculate_moves(self.board)
 
         new_square.reset_subscriptions()
         piece_square.reset_subscriptions()
@@ -93,7 +92,7 @@ class Board:
 
         for i in range(2, middle_rows):
             
-            self.board.append([   setup_square(EMPTY, EMPTY) for j in range(BOARD_COLUMNS)   ])
+            self.board.append([   setup_square(EMPTY, EMPTY, self.board) for j in range(BOARD_COLUMNS)   ])
         
         self.board.append(self._initialize_row(self.piece_forepattern, WHITE))
         self.board.append(self._initialize_row(self.piece_backpattern, WHITE))
@@ -103,8 +102,7 @@ class Board:
             if piece:
                 piece.row = row
                 piece.column = column
-                reachable_squares, blocked_squares = piece.get_reachable_and_blocked_coords(self.board)
-                piece.set_moves(reachable_squares, blocked_squares)
+                piece.recalculate_moves(self.board)
 
     def _subscribe_pieces_to_squares(self, pieces):
         for piece in pieces:
@@ -122,7 +120,7 @@ class Board:
         row = []
         for piece_type in pattern:
 
-            square = setup_square(piece_type, team)
+            square = setup_square(piece_type, team, self.board)
             row.append(square)
             self.pieces.append(square.piece)
 
@@ -136,11 +134,11 @@ class Board:
 # a bit uggo. 
 from piece import Pawn, Rook, Knight, Bishop, Queen, King
 piece_switch = {PAWN: Pawn, ROOK: Rook, KNIGHT: Knight, BISHOP: Bishop, QUEEN: Queen, KING: King}
-def _fill_square(piece_type, team):
-    return piece_switch[piece_type](team)
+def _fill_square(piece_type, team, board):
+    return piece_switch[piece_type](team, board)
 
-def setup_square(piece_type, team):
+def setup_square(piece_type, team, board):
     square = Square()
     if piece_type != EMPTY:
-        square.piece = _fill_square(piece_type, team)
+        square.piece = _fill_square(piece_type, team, board)
     return square
