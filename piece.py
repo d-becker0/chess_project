@@ -64,7 +64,7 @@ class Piece:
             current_moves, blocked_moves = self.on_first_move(board)
         return current_moves, blocked_moves
 
-    # TODO: Refactor, a bit repetitive and messy
+    # TODO: Refactor, repetitive and messy
     def _find_moves(self, board):
         current_moves = []
         blocked_moves = []
@@ -111,7 +111,7 @@ class Piece:
             square_team = self._team_from_square(square)
 
             can_take = self._can_take_square(row, column, square_team)
-            
+
             if can_take and not results_in_check:
                 current_moves.append(Move(row, column, direction, 1, self, can_take, results_in_check, pieces_in_between))
             else:
@@ -125,8 +125,8 @@ class Piece:
             return False # temporary fix
         
         check = True
-        if self._moves_out_of_pin(row,column,board,self.king_square):
-            pass
+        # if self._moves_out_of_pin(row,column,board,self.king_square):
+        #     pass
         
         if self._blocking_check(row,column,board,self.king_square):
             check = False
@@ -153,9 +153,9 @@ class Piece:
                 if (row, column) == (dir_move.row, dir_move.column):
                     print("Blocking at:", str((row, column)), "for", str(self))
                     blocking = True
+                    break
                 else:
                     blocking = False
-                    break
 
         return blocking
         

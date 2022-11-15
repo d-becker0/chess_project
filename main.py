@@ -45,9 +45,19 @@ if __name__ == "__main__":
                 display.end_of_turn(board)
                 
                 if white.in_check(board.board):
+                    white.was_in_check = True
                     white.recalculate_all(board.board)
-                
+                elif white.was_in_check:
+                    white.was_in_check = False
+                    white.recalculate_all(board.board)
+                    
                 if black.in_check(board.board):
+                    black.was_in_check = True
+                    print("Black is checked", black.find_checking_pieces(board.board))
+                    black.recalculate_all(board.board)
+                elif black.was_in_check:
+                    print("Black is not checked")
+                    black.was_in_check = False
                     black.recalculate_all(board.board)
 
                 selection = None
