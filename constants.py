@@ -22,6 +22,8 @@ EMPTY = '-'
 
 BOARD_ROWS = 8
 BOARD_COLUMNS = 8
+
+    # larger dimension
 if BOARD_ROWS > BOARD_COLUMNS:
     BOARD_DIM = BOARD_ROWS
 else:

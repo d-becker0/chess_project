@@ -15,7 +15,7 @@ class Player:
         for piece in self.pieces:
             piece.recalculate_moves(board)
     
-    def is_checked(self, board):
+    def in_check(self, board):
         king_square = board[self.king.row][self.king.column]
         for piece in king_square.reached_by_pieces:
             if piece.team != self.team:

@@ -49,7 +49,7 @@ if __name__ == "__main__":
                     white.was_in_checked = False
                     white.recalculate_all(board.board)
                 
-                black_in_check = black.is_checked(board.boardz)
+                black_in_check = black.is_checked(board.board)
                 if black_in_check or (not black_in_check and black.was_in_check):
                     black.king.is_checked = False
                     black.recalculate_all(board.board)
