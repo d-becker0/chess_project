@@ -106,10 +106,7 @@ class Display:
             square = board[move.row][move.column]
             self._draw_tile(move.row, move.column, self._choose_color(move.row, move.column))
             self._draw_piece(move.row, move.column, square.piece)
-            
         pygame.display.update()
-
-        
 
     def _load_image(self, image_path):
         return pygame.image.load(image_path)

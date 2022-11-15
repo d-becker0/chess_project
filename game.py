@@ -8,20 +8,24 @@ class Player:
         self.king = self._get_king(self.pieces)
 
         self.was_in_check = False
-        self.checking_pieces= []
-        self.pinning_pieces = []
     
     def recalculate_all(self, board):
         for piece in self.pieces:
             piece.recalculate_moves(board)
-    
+
+    def find_checking_pieces(self, board):
+        king_square = board[self.king.row][self.king.column]
+        return king_square.reached_by_pieces
+
+    def find_pinning_pieces(self, board):
+        king_square = board[self.king.row][self.king.column]
+        return king_square.blocked_for_pieces
+
     def in_check(self, board):
         king_square = board[self.king.row][self.king.column]
-        for piece in king_square.reached_by_pieces:
-            if piece.team != self.team:
-                self.was_in_check = True
+        for move in king_square.reached_by_pieces:
+            if move.piece.team != self.team:
                 return True
-        self.was_in_check = False
         return False
 
     def _get_team_pieces(self, pieces):

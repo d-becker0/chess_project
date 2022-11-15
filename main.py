@@ -43,6 +43,12 @@ if __name__ == "__main__":
                 
                 game.increment_turn()
                 display.end_of_turn(board)
+                
+                if white.in_check(board.board):
+                    white.recalculate_all(board.board)
+                
+                if black.in_check(board.board):
+                    black.recalculate_all(board.board)
 
                 selection = None
                 selected_coords = None

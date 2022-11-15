@@ -3,44 +3,31 @@ from constants import *
 class Square:
     def __init__(self):
         self.piece = None
+
+        # need better name for these, since turning them to moves
         self.blocked_for_pieces = []
         self.reached_by_pieces = []
 
     # only recalculate moves of pieces that interact with previous and new square
     def get_pieces_to_update(self):
         visited = []
-        for piece in self.blocked_for_pieces:
-            if piece not in visited:
-                visited.append(piece)
+        for move in self.blocked_for_pieces:
+            if move.piece not in visited:
+                visited.append(move.piece)
 
-                print("Recalculated", piece, "at position", str((piece.row, piece.column)))
+                print("Recalculated", move.piece, "at position", str((move.piece.row, move.piece.column)))
                 
-        for piece in self.reached_by_pieces:
-            if piece not in visited:
-                visited.append(piece)
+        for move in self.reached_by_pieces:
+            if move.piece not in visited:
+                visited.append(move.piece)
 
-                print("Recalculated", piece, "at position", str((piece.row, piece.column)))
+                print("Recalculated", move.piece, "at position", str((move.piece.row, move.piece.column)))
 
         return visited
         
     def reset_subscriptions(self):
         self.blocked_for_pieces = []
         self.reached_by_pieces = []
-
-    def square_is_blocked(self, piece):
-        if piece in self.blocked_for_pieces:
-            return True
-        return False
-    
-    def square_is_reachable(self, piece):
-        if piece in self.reached_by_pieces:
-            return True
-        return False
-
-    def square_in_moveset(self, piece):
-        if self.square_is_blocked(piece) or self.square_is_reachable(piece):
-            return True
-        return False
 
 class Board:
     def __init__(self):
@@ -73,13 +60,12 @@ class Board:
 
         for piece_to_update in update_pieces:
             piece_to_update.recalculate_moves(self.board)
-
+        
+        # TODO: this doesn't empty all square info (if a move is made, moves that weren't taken are unchanged)
         new_square.reset_subscriptions()
         piece_square.reset_subscriptions()
 
         self._subscribe_pieces_to_squares(update_pieces)
-
-        
 
     # board setup
     def _setup_board(self):
@@ -106,15 +92,14 @@ class Board:
 
     def _subscribe_pieces_to_squares(self, pieces):
         for piece in pieces:
-            self._subscribe_single_piece_to_squares(piece)
+            self._subscribe_piece_moves_to_squares(piece)
             
-    def _subscribe_single_piece_to_squares(self, piece):
+    def _subscribe_piece_moves_to_squares(self, piece):
         if piece:
             for move in piece.current_moves:
-                self.board[move.row][move.column].reached_by_pieces.append(piece)
+                self.board[move.row][move.column].reached_by_pieces.append(move)
             for move in piece.blocked_moves:
-                self.board[move.row][move.column].blocked_for_pieces.append(piece)
-
+                self.board[move.row][move.column].blocked_for_pieces.append(move)
 
     def _initialize_row(self, pattern, team):
         row = []
