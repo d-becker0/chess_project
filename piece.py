@@ -2,9 +2,11 @@ from constants import *
 
 # class storing data about move
 class Move:
-    def __init__(self, direction, distance, piece, can_take, is_legal):
+    def __init__(self, row, column, direction, distance, piece, can_take, is_legal):
         self.direction = direction
         self.distance = distance
+        self.row = row
+        self.column = column
         self.piece = piece
         self.can_take = can_take
         self.is_legal = is_legal
@@ -21,6 +23,18 @@ class Piece:
         self.single_moves = []
         self.directional_moves = []
         self.orientation = -1 if team == WHITE else 1  # orients pawns by team -- other pieces have symmetry
+
+    def row_col_in_current_moves(self, row, column):
+        for move in self.current_moves:
+            if (row, column) == (move.row, move.column):
+                return True
+        return False
+
+    def row_col_in_blocked_moves(self, row, column):
+        for move in self.blocked_moves:
+            if (row, column) == (move.row, move.column):
+                return True
+        return False
 
     def move(self, row, column, board):
         self.place_piece(row, column)
@@ -68,9 +82,9 @@ class Piece:
                 can_take = self._can_take_square(row, column, square_team)
                 
                 if can_take and can_continue:
-                    current_moves.append(Move(direction, distance, self, can_take, results_in_check))
+                    current_moves.append(Move(row, column, direction, distance, self, can_take, results_in_check))
                 else:
-                    blocked_moves.append(Move(direction, distance, self, can_take, results_in_check))
+                    blocked_moves.append(Move(row, column, direction, distance, self, can_take, results_in_check))
 
                 # once it can't continue, will remain false for rest of direction
                 if can_continue:
@@ -80,7 +94,7 @@ class Piece:
             row, column = self._get_square_from_vector(direction, 1)
 
             if not self._on_board(row, column):
-                break
+                continue
 
             results_in_check = False #self._results_in_check(row, column, board)
 
@@ -90,9 +104,9 @@ class Piece:
             can_take = self._can_take_square(row, column, square_team)
             
             if can_take:
-                current_moves.append(Move(direction, 1, self, can_take, results_in_check))
+                current_moves.append(Move(row, column, direction, 1, self, can_take, results_in_check))
             else:
-                blocked_moves.append(Move(direction, 1, self, can_take, results_in_check))
+                blocked_moves.append(Move(row, column, direction, 1, self, can_take, results_in_check))
 
         return current_moves, blocked_moves
 
@@ -109,51 +123,6 @@ class Piece:
             return True
 
         return False
-
-    # a pin is when a piece is stuck in some position(s)
-    # because it blocks a check on the king
-    def _moves_out_of_pin(self, row, column, board, king_square):
-        check = False
-        for piece in king_square.blocked_for_pieces:
-            if piece.team == self.team:
-                continue
-            if (self.row, self.column) not in piece.current_moves:   # is self not "attacked" by piece
-                continue
-            # what if self is attacked by a piece, but not in between piece and king
-            if not self._is_between(king_square.piece, piece, self.row, self.column):
-                continue
-            if (row, column) in piece.current_moves or (row, column) in piece.blocked_moves:
-                check = False
-            else:
-                check = True   # moving self to (row, column) results in check
-        return check
-
-    # find if a certain coord is "between" attacker and victim piece (exists in attacker's legal moves)
-    def _is_between(attacker, victim, row, column):
-        row_diff = attacker.row - victim.row
-        column_diff = attacker.column - victim.column
-
-
-                
-    def _not_blocking_check(self, row, column, board, king_square):
-        check = False
-        for piece in king_square.reachable_by_pieces:
-            if piece.team == self.team:
-                continue
-            if (row, column) in piece.current_moves \
-                or (row, column) in piece.blocked_moves \
-                or (row, column) == (piece.row, piece.column):
-                check = False
-            else:
-                check = True   # moving self to (row, column) results in check
-        return check
-
-    def _find_king(self, board):
-        for row in board:
-            for square in row:
-                if isinstance(square.piece, King) and square.piece.team == self.team:
-                    print(square.piece)
-                    return square.piece
 
     def _team_from_square(self, square):
         if square.piece:
@@ -190,9 +159,6 @@ class Piece:
         if team == self.team:
             return False
         return True
-
-    def on_turn_end(self):
-        pass
 
 class Pawn(Piece):
     def __init__(self, team):

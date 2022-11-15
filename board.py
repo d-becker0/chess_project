@@ -53,8 +53,7 @@ class Board:
 
         self._setup_board()
         self._initialize_piece_moves()
-        for piece in self.pieces:
-            self._initialize_moves_in_squares(piece)
+        self._subscribe_pieces_to_squares(self.pieces)
 
 
     # TODO: lots of redundancy to reduce
@@ -80,6 +79,8 @@ class Board:
 
         self._subscribe_pieces_to_squares(update_pieces)
 
+        
+
     # board setup
     def _setup_board(self):
         middle_rows = BOARD_ROWS - 2
@@ -99,23 +100,21 @@ class Board:
     def _initialize_piece_moves(self):
         for row, column, piece in self.yield_coords_and_piece():
             if piece:
-                piece.place_piece(row, column)
+                piece.row = row
+                piece.column = column
                 piece.recalculate_moves(self.board)
+
+    def _subscribe_pieces_to_squares(self, pieces):
+        for piece in pieces:
+            self._subscribe_single_piece_to_squares(piece)
             
-    def _send_moves_to_squares(self, piece):
+    def _subscribe_single_piece_to_squares(self, piece):
         if piece:
             for move in piece.current_moves:
-                move_row, move_column = piece._get_square_from_vector(move.direction, move.distance)
-                self.board[move_row][move_column].possible_moves.append(move)
+                self.board[move.row][move.column].reached_by_pieces.append(piece)
             for move in piece.blocked_moves:
-                move_row, move_column = piece._get_square_from_vector(move.direction, move.distance)
-                self.board[move_row][move_column].blocked_moves.append(move)
+                self.board[move.row][move.column].blocked_for_pieces.append(piece)
 
-    def update_square(self):
-        pass
-
-    def update_piece_by_move(self):
-        pass
 
     def _initialize_row(self, pattern, team):
         row = []

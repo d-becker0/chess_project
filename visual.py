@@ -88,14 +88,13 @@ class Display:
 
         # debug
         print("Piece at -- row:", row, "column:", column)
-        print("Piece's moves -- ", str(selection.piece.reachable_squares))
-        print("Piece blocked for --", str(selection.piece.blocked_squares))
+        print("Piece's moves -- ", str(selection.piece.current_moves))
+        print("Piece blocked for --", str(selection.piece.blocked_moves))
 
-        for move in selection.piece.reachable_squares:
-            row, column = move
-            square = board[row][column]
-            self._draw_tile(row, column, SECONDARY_HIGHLIGHT)
-            self._draw_piece(row, column, square.piece)
+        for move in selection.piece.current_moves:
+            square = board[move.row][move.column]
+            self._draw_tile(move.row, move.column, SECONDARY_HIGHLIGHT)
+            self._draw_piece(move.row, move.column, square.piece)
 
         pygame.display.update()
 
@@ -103,11 +102,10 @@ class Display:
         self._draw_tile(row, column, self._choose_color(row, column))
         self._draw_piece(row, column, unselected.piece)
 
-        for move in unselected.piece.reachable_squares:
-            row, column = move
-            square = board[row][column]
-            self._draw_tile(row, column, self._choose_color(row, column))
-            self._draw_piece(row, column, square.piece)
+        for move in unselected.piece.current_moves:
+            square = board[move.row][move.column]
+            self._draw_tile(move.row, move.column, self._choose_color(move.row, move.column))
+            self._draw_piece(move.row, move.column, square.piece)
             
         pygame.display.update()
 
