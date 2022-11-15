@@ -38,21 +38,11 @@ if __name__ == "__main__":
                 selection = square
                 selected_coords = (row, column)
             
-            elif (selection) and ( (row, column) in selection.piece.reachable_squares ):
+            elif (selection) and selection.piece.row_col_in_current_moves(row, column):
                 board.update(row, column, selection)
                 
                 game.increment_turn()
                 display.end_of_turn(board)
-                
-                white_in_check = white.is_checked(board.board)
-                if white_in_check or (not white_in_check and white.was_in_check):
-                    white.was_in_checked = False
-                    white.recalculate_all(board.board)
-                
-                black_in_check = black.is_checked(board.board)
-                if black_in_check or (not black_in_check and black.was_in_check):
-                    black.king.is_checked = False
-                    black.recalculate_all(board.board)
 
                 selection = None
                 selected_coords = None
