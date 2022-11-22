@@ -15,11 +15,11 @@ class Player:
 
     def find_checking_pieces(self, board):
         king_square = board[self.king.row][self.king.column]
-        return king_square.reached_by_pieces
+        return [move.piece for move in king_square.reached_by_pieces if move.piece.team != self.team]
 
     def find_pinning_pieces(self, board):
         king_square = board[self.king.row][self.king.column]
-        return king_square.blocked_for_pieces
+        return [move.piece for move in king_square.blocked_for_pieces if move.piece.team != self.team]
 
     def in_check(self, board):
         king_square = board[self.king.row][self.king.column]

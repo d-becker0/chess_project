@@ -12,6 +12,9 @@ class Move:
         self.can_take = can_take
         self.is_legal = is_legal
         self.pieces_in_between = pieces_in_between
+    
+    def __repr__(self):
+        return f"{self.can_take} at ({self.row}, {self.column})"
 
 class Piece:
     def __init__(self, team):
@@ -20,12 +23,14 @@ class Piece:
         self.moved_last = False
         self.row = None
         self.column = None
-        self.king_square = None
 
         # each direction in format (dir_x, dir_y, max_length_in_direction)
         self.single_moves = []
         self.directional_moves = []
         self.orientation = -1 if team == WHITE else 1  # orients pawns by team -- other pieces have symmetry
+
+    def __repr__(self):
+        return f"({self.team} {type(self)})"
 
     def row_col_in_current_moves(self, row, column):
         for move in self.current_moves:
@@ -120,43 +125,44 @@ class Piece:
         return current_moves, blocked_moves
 
     def _results_in_check(self, row, column, board):
-        if not self.king_square:
-            self.king_square = self._find_king(board)
-            return False # temporary fix
-        
+        king_square = self._find_king(board)
+        checking_moves = self._get_checking_moves(king_square)
+
         check = True
-        # if self._moves_out_of_pin(row,column,board,self.king_square):
-        #     pass
-        
-        if self._blocking_check(row,column,board,self.king_square):
+        if self._moves_out_of_pin(row,column,board,self.king_square):
+            pass
+
+        if not isinstance(self, King) and self._blocking_check(row, column, checking_moves):
             check = False
+
+        if isinstance(self, King) and self._fleeing_check(row, column, board, king_square):
+            check = False
+            
         return check
 
-    def _moves_out_of_pin(self, row, column, board, king_square):
-        pass
-
-    # TODO: Seriously uggo code stemming from poorish concept of move/square interaction
-    # TODO: Pretty sure in all cases a double check forces king to move
-    def _blocking_check(self, row, column, board, king_square):
+    def _get_checking_moves(self, king_square):
         checking_moves = []
         for move in king_square.reached_by_pieces:
             if move.piece.team == self.team:
                 continue
             else:
-                checking_moves.append(move) # does not care about opponent move legality
-        
+                checking_moves.append(move)
+        return checking_moves
+
+    def _moves_out_of_pin(self, row, column, board, king_square):
+        pass
+
+    def _blocking_check(self, row, column, checking_moves):
         blocking = True
         for checking_move in checking_moves:
             moves_in_check_direction = self._get_all_moves_in_direction(checking_move)
 
             for dir_move in moves_in_check_direction:
                 if (row, column) == (dir_move.row, dir_move.column):
-                    print("Blocking at:", str((row, column)), "for", str(self))
                     blocking = True
                     break
                 else:
                     blocking = False
-
         return blocking
         
     def _get_all_moves_in_direction(self, move):
@@ -204,6 +210,7 @@ class Piece:
     def on_first_move(self, board):
         return self._find_moves(board)
 
+    # row, column are important when using for pawn! DON'T REMOVE!!!
     def _can_take_square(self, row, column, team):
         if team == self.team:
             return False
@@ -218,22 +225,12 @@ class Pawn(Piece):
             self.image = 'images/bp.png'
         self.single_moves = [(0,1), (1,1), (-1,1)]
 
+    # very lazy hacky way of dealing with this
     def on_first_move(self, board):
-        current_moves, blocked_moves= self._find_moves(board)
+        self.single_moves.append((0,2))
+        current_moves, blocked_moves = self._find_moves(board)
+        self.single_moves.remove((0,2))
         
-        if not current_moves:
-            return current_moves, blocked_moves
-
-        square = current_moves[0]
-        two_move_row = square[0] + self.orientation 
-        two_move_column = square[1] # column doesn't change
-
-        if self._results_in_check(two_move_row, two_move_column, board):
-            if self._reachable_or_blocked(two_move_row, two_move_column, board):
-                current_moves.append((two_move_row, two_move_column))
-            else:
-                blocked_moves.append((two_move_row, two_move_column))
-
         return current_moves, blocked_moves
 
     # must be other team piece on forward facing diagonal of pawn

@@ -5,6 +5,7 @@ class Square:
         self.piece = None
 
         # need better name for these, since turning them to moves
+        # UUGGGGG DANTE! Source of a bug that took forever to find!!!
         self.blocked_for_pieces = []
         self.reached_by_pieces = []
 
@@ -29,6 +30,13 @@ class Square:
         self.blocked_for_pieces = []
         self.reached_by_pieces = []
 
+    def remove_move(self, move):
+        if move in self.blocked_for_pieces:
+            self.blocked_for_pieces.remove(move)
+        
+        if move in self.reached_by_pieces:
+            self.reached_by_pieces.remove(move)
+
 class Board:
     def __init__(self):
         self.piece_forepattern = [  PAWN  for board_square in range(BOARD_ROWS)  ]
@@ -42,9 +50,7 @@ class Board:
         self._initialize_piece_moves()
         self._subscribe_pieces_to_squares(self.pieces)
 
-
     # TODO: lots of redundancy to reduce
-
     def update(self, row, column, piece_square):
         piece = piece_square.piece
 
@@ -58,13 +64,17 @@ class Board:
         update_pieces = new_square.get_pieces_to_update()
         update_pieces.extend( piece_square.get_pieces_to_update() )
 
+        # really ugly, but I need some way of getting rid of no longer valid moves
+        # there is a better way to do this, and I will do it later
+        for piece_to_update in update_pieces:
+            for move in piece_to_update.current_moves:
+                self.board[move.row][move.column].remove_move(move)
+            for move in piece_to_update.blocked_moves:
+                self.board[move.row][move.column].remove_move(move)
+
         for piece_to_update in update_pieces:
             piece_to_update.recalculate_moves(self.board)
         
-        # TODO: this doesn't empty all square info (if a move is made, moves that weren't taken are unchanged)
-        new_square.reset_subscriptions()
-        piece_square.reset_subscriptions()
-
         self._subscribe_pieces_to_squares(update_pieces)
 
     # board setup
@@ -108,7 +118,6 @@ class Board:
             square = setup_square(piece_type, team)
             row.append(square)
             self.pieces.append(square.piece)
-
         return row
 
     def yield_coords_and_piece(self):

@@ -24,7 +24,7 @@ if __name__ == "__main__":
         pos = interface.event_loop()
 
         if pos:
-            column, row = pos # why do I need to reverse these?
+            column, row = pos # why do I need to reverse these? -> x,y to y, x
             square = board.board[row][column]
 
             if (square.piece) and ( square.piece.team == current_team ):
@@ -50,13 +50,14 @@ if __name__ == "__main__":
                 elif white.was_in_check:
                     white.was_in_check = False
                     white.recalculate_all(board.board)
-                    
+                
+                # need to freeze all non-blocking moves or unfreeze after a check is blocked
                 if black.in_check(board.board):
                     black.was_in_check = True
                     print("Black is checked", black.find_checking_pieces(board.board))
                     black.recalculate_all(board.board)
                 elif black.was_in_check:
-                    print("Black is not checked")
+                    print("Black out of check")
                     black.was_in_check = False
                     black.recalculate_all(board.board)
 
