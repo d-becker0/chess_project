@@ -1,6 +1,8 @@
+
 from constants import *
 
 # class storing data about move
+
 class Move:
     def __init__(self, row, column, direction, distance, piece, can_take, is_legal, pieces_in_between):
         self.direction = direction
@@ -12,10 +14,10 @@ class Move:
         self.can_take = can_take
         self.is_legal = is_legal
         self.pieces_in_between = pieces_in_between
-    
+        
     def __repr__(self):
         return f"{self.can_take} at ({self.row}, {self.column})"
-
+        
 class Piece:
     def __init__(self, team):
         self.team = team
@@ -124,21 +126,26 @@ class Piece:
 
         return current_moves, blocked_moves
 
+    # TODO: Am not yet considering illegal moves which cause checks
     def _results_in_check(self, row, column, board):
         king_square = self._find_king(board)
         checking_moves = self._get_checking_moves(king_square)
 
         check = True
-        if self._moves_out_of_pin(row,column,board,self.king_square):
-            pass
+        
+        leaving_pin = self._moves_out_of_pin(row,column,board,checking_moves)
+        
+        blocking = not isinstance(self, King) and self._blocking_check(row, column, checking_moves)
 
-        if not isinstance(self, King) and self._blocking_check(row, column, checking_moves):
-            check = False
+        fleeing = isinstance(self, King) and self._fleeing_check(row, column, board)
 
-        if isinstance(self, King) and self._fleeing_check(row, column, board, king_square):
-            check = False
-            
-        return check
+        checking_pieces = [move.piece for move in checking_moves if move.piece.team != self.team]
+        taking = self._takes_checking_piece(row, column, checking_pieces)
+        
+        if (fleeing or blocking or taking) and not leaving_pin:
+            return False
+        else:
+            return True
 
     def _get_checking_moves(self, king_square):
         checking_moves = []
@@ -149,9 +156,20 @@ class Piece:
                 checking_moves.append(move)
         return checking_moves
 
-    def _moves_out_of_pin(self, row, column, board, king_square):
-        pass
+    # will only apply to non-king pieces
+    def _moves_out_of_pin(self, row, column, board, blocked_moves):
+        return False
+    #     for chec
 
+    # will only apply to king pieces
+    def _fleeing_check(self, row, column, board):
+        fleeing = True
+        for move in board[row][column].reached_by_pieces:
+            if move.piece.team != self.team:
+                fleeing = False
+        return fleeing
+
+    # will only apply to non-king pieces
     def _blocking_check(self, row, column, checking_moves):
         blocking = True
         for checking_move in checking_moves:
@@ -163,8 +181,18 @@ class Piece:
                     break
                 else:
                     blocking = False
+
         return blocking
-        
+
+    def _takes_checking_piece(self, row, column, checking_pieces):
+        taking = False
+        for checking_piece in checking_pieces:
+            if (row,column) == (checking_piece.row, checking_piece.column):
+                taking = True
+            else:
+                taking = False
+        return taking
+            
     def _get_all_moves_in_direction(self, move):
         reachable_moves = []
         for current_move in move.piece.current_moves:
