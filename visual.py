@@ -87,9 +87,10 @@ class Display:
         self._draw_piece(row, column, selection.piece)
 
         # debug
-        print("Piece at -- row:", row, "column:", column)
-        print("Piece's moves -- ", str(selection.piece.current_moves))
-        print("Piece blocked for --", str(selection.piece.blocked_moves))
+        print(str(selection.piece),"at -- row:", row, "column:", column)
+        print("Pieces blocked by 1 piece", str([move.piece for move in selection.blocked_for_pieces if move.pieces_in_between == 1]))
+        # print("Piece's moves -- ", str(selection.piece.current_moves))
+        # print("Piece blocked for --", str(selection.piece.blocked_moves))
 
         for move in selection.piece.current_moves:
             square = board[move.row][move.column]

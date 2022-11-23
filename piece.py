@@ -3,6 +3,9 @@ from constants import *
 
 # class storing data about move
 
+# TODO: add comparison/equality method
+# TODO: Easy method to find if row, column in direction
+# TODO: Encapsulate more move behavior here, away from pieces and squares
 class Move:
     def __init__(self, row, column, direction, distance, piece, can_take, is_legal, pieces_in_between):
         self.direction = direction
@@ -133,7 +136,7 @@ class Piece:
 
         check = True
         
-        leaving_pin = self._moves_out_of_pin(row,column,board,checking_moves)
+        leaving_pin = not isinstance(self, King) and self._moves_out_of_pin(row,column,board,checking_moves)
         
         blocking = not isinstance(self, King) and self._blocking_check(row, column, checking_moves)
 
@@ -157,9 +160,21 @@ class Piece:
         return checking_moves
 
     # will only apply to non-king pieces
+    # TODO: Hella uggo piece-a-code
     def _moves_out_of_pin(self, row, column, board, blocked_moves):
-        return False
-    #     for chec
+        leaving_pin = False
+        for move in blocked_moves:                       # blocked moves are from king square
+            if move.piece.team != self.team:             # don't care about moves that don't check
+                if move.pieces_in_between == 1:          # if pieces_in_between king_square and checking piece >1, at least 1 more piece blocking
+                    leaving_pin = True
+                    for current_move in move.piece.current_moves:
+                        if (row, column) == (current_move.row, current_move.column):
+                            leaving_pin = False
+                    for blocked_move in move.piece.blocked_moves:
+                        if (row, column) == (blocked_move.row, blocked_move.column) and blocked_move.pieces_in_between <=1:              
+                            # pieces_in_between <=1, when a pinned piece moves away from pinning piece (towards king)
+                            leaving_pin = False
+        return leaving_pin
 
     # will only apply to king pieces
     def _fleeing_check(self, row, column, board):
@@ -172,7 +187,7 @@ class Piece:
     # will only apply to non-king pieces
     def _blocking_check(self, row, column, checking_moves):
         blocking = True
-        for checking_move in checking_moves:
+        for checking_move in checking_moves:  # limited to moves before the king
             moves_in_check_direction = self._get_all_moves_in_direction(checking_move)
 
             for dir_move in moves_in_check_direction:
