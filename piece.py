@@ -136,7 +136,8 @@ class Piece:
 
         check = True
         
-        leaving_pin = not isinstance(self, King) and self._moves_out_of_pin(row,column,board,checking_moves)
+        blocked_moves = [move for move in king_square.blocked_for_pieces if move.piece.team != self.team]
+        leaving_pin = not isinstance(self, King) and self._moves_out_of_pin(row,column,board, blocked_moves)
         
         blocking = not isinstance(self, King) and self._blocking_check(row, column, checking_moves)
 
@@ -145,7 +146,7 @@ class Piece:
         checking_pieces = [move.piece for move in checking_moves if move.piece.team != self.team]
         taking = self._takes_checking_piece(row, column, checking_pieces)
         
-        if (fleeing or blocking or taking) and not leaving_pin:
+        if (fleeing or blocking or taking):# and not leaving_pin:
             return False
         else:
             return True
@@ -164,14 +165,15 @@ class Piece:
     def _moves_out_of_pin(self, row, column, board, blocked_moves):
         leaving_pin = False
         for move in blocked_moves:                       # blocked moves are from king square
-            if move.piece.team != self.team:             # don't care about moves that don't check
-                if move.pieces_in_between == 1:          # if pieces_in_between king_square and checking piece >1, at least 1 more piece blocking
-                    leaving_pin = True
+            if move.piece.team != self.team:             # don't care about moves of same team (no check possible)
+                if move.pieces_in_between == 1:       
+                    # if pieces_in_between king_square and checking piece >1, at least 1 piece blocking a check
+                    print(move.piece, 'is pinning piece to king')
                     for current_move in move.piece.current_moves:
                         if (row, column) == (current_move.row, current_move.column):
                             leaving_pin = False
                     for blocked_move in move.piece.blocked_moves:
-                        if (row, column) == (blocked_move.row, blocked_move.column) and blocked_move.pieces_in_between <=1:              
+                        if (row, column) == (blocked_move.row, blocked_move.column) and blocked_move.pieces_in_between <=1:
                             # pieces_in_between <=1, when a pinned piece moves away from pinning piece (towards king)
                             leaving_pin = False
         return leaving_pin
@@ -187,7 +189,7 @@ class Piece:
     # will only apply to non-king pieces
     def _blocking_check(self, row, column, checking_moves):
         blocking = True
-        for checking_move in checking_moves:  # limited to moves before the king
+        for checking_move in checking_moves:  # limited to moves before/on the king
             moves_in_check_direction = self._get_all_moves_in_direction(checking_move)
 
             for dir_move in moves_in_check_direction:

@@ -16,13 +16,13 @@ class Square:
             if move.piece not in visited:
                 visited.append(move.piece)
 
-                print("Recalculated", move.piece, "at position", str((move.piece.row, move.piece.column)))
+                # print("Recalculated", move.piece, "at position", str((move.piece.row, move.piece.column)))
                 
         for move in self.reached_by_pieces:
             if move.piece not in visited:
                 visited.append(move.piece)
 
-                print("Recalculated", move.piece, "at position", str((move.piece.row, move.piece.column)))
+                # print("Recalculated", move.piece, "at position", str((move.piece.row, move.piece.column)))
 
         return visited
         
