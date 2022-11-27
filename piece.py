@@ -20,7 +20,13 @@ class Move:
         
     def __repr__(self):
         return f"{self.can_take} at ({self.row}, {self.column})"
-        
+
+    def __eq__(self, other_move):
+        return (self.row, self.column) == (other_move.row, other_move.column)
+
+class MoveSet:
+    pass
+
 class Piece:
     def __init__(self, team):
         self.team = team
@@ -52,7 +58,7 @@ class Piece:
     def move(self, row, column, board):
         self.place_piece(row, column)
         self.has_moved = True
-        current_moves, blocked_moves = self._find_moves(board)
+        current_moves, blocked_moves = self._get_current_and_blocked_moves(board)
         self._set_moves(current_moves, blocked_moves)
 
     def place_piece(self, row, column):
@@ -146,7 +152,7 @@ class Piece:
         checking_pieces = [move.piece for move in checking_moves if move.piece.team != self.team]
         taking = self._takes_checking_piece(row, column, checking_pieces)
         
-        if (fleeing or blocking or taking):# and not leaving_pin:
+        if (fleeing or blocking or taking) and not leaving_pin:
             return False
         else:
             return True
@@ -161,21 +167,26 @@ class Piece:
         return checking_moves
 
     # will only apply to non-king pieces
-    # TODO: Hella uggo piece-a-code
     def _moves_out_of_pin(self, row, column, board, blocked_moves):
+        self_square = board[self.row][self.column]
+        pieces_which_reach_self = [move.piece for move in self_square.reached_by_pieces if move.piece.team != self.team]
+
         leaving_pin = False
-        for move in blocked_moves:                       # blocked moves are from king square
-            if move.piece.team != self.team:             # don't care about moves of same team (no check possible)
-                if move.pieces_in_between == 1:       
-                    # if pieces_in_between king_square and checking piece >1, at least 1 piece blocking a check
-                    print(move.piece, 'is pinning piece to king')
-                    for current_move in move.piece.current_moves:
+        for move in blocked_moves:  # blocked moves are from king square
+            if move.piece.team != self.team and move.piece in pieces_which_reach_self:
+                # don't care about moves of same team that don't have current move to piece (no check possible)
+                leaving_pin = True
+
+                if move.pieces_in_between <= 1:
+                    for current_move in move.piece.current_moves: # moving towards pinning piece (on "line" between king and pinning piece)
                         if (row, column) == (current_move.row, current_move.column):
                             leaving_pin = False
+                            break
                     for blocked_move in move.piece.blocked_moves:
-                        if (row, column) == (blocked_move.row, blocked_move.column) and blocked_move.pieces_in_between <=1:
-                            # pieces_in_between <=1, when a pinned piece moves away from pinning piece (towards king)
+                        if (row, column) == (blocked_move.row, blocked_move.column) and blocked_move.pieces_in_between ==1:
+                            # pieces_in_between ==1, when a pinned piece moves away from pinning piece (towards king)
                             leaving_pin = False
+                            break
         return leaving_pin
 
     # will only apply to king pieces
@@ -190,7 +201,7 @@ class Piece:
     def _blocking_check(self, row, column, checking_moves):
         blocking = True
         for checking_move in checking_moves:  # limited to moves before/on the king
-            moves_in_check_direction = self._get_all_moves_in_direction(checking_move)
+            moves_in_check_direction = self._get_current_moves_in_direction(checking_move)
 
             for dir_move in moves_in_check_direction:
                 if (row, column) == (dir_move.row, dir_move.column):
@@ -210,12 +221,19 @@ class Piece:
                 taking = False
         return taking
             
-    def _get_all_moves_in_direction(self, move):
+    def _get_current_moves_in_direction(self, move):
         reachable_moves = []
         for current_move in move.piece.current_moves:
             if move.direction == current_move.direction:
                 reachable_moves.append(current_move)
         return reachable_moves
+
+    def _get_blocked_moves_in_direction(self, move):
+        blocked_moves = []
+        for blocked_move in move.piece.blocked_moves:
+            if move.direction == blocked_move.direction:
+                blocked_moves.append(blocked_move)
+        return blocked_moves
 
     def _find_king(self, board):
         for row in board:
