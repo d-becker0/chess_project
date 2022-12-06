@@ -4,12 +4,29 @@
 
 # Dictionary keys 
 
+# teams
 BLACK = 'black'
 WHITE = 'white'
 
-DIRECTION = 'direction'
-MAX_DISTANCE = 'scalar'
+# move template format
+X_DIR = 'x_direction'
+Y_DIR = 'y_direction'
+DIRECTION = 'direction'  # TODO: likely redundant must check
+MAX_DIST = 'scalar'
+EVAL_TYPE = 'eval_type'
 
+# specific eval types
+STANDARD_MOVE = 'reg'
+
+KING_MOVE = 'king_reg'
+CASTLING = 'castle'
+
+PAWN_ATTACK = 'pawn_diagonal'
+PAWN_DOUBLE = 'pawn_double'
+PROMOTION = 'promote'
+EN_PASSANT = 'en_passant'
+
+# piece type
 ROOK = 'r'
 KNIGHT = 'n'
 BISHOP = 'b'
@@ -17,6 +34,8 @@ QUEEN = 'q'
 KING = 'k'
 PAWN = 'p'
 EMPTY = '-'
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Board constants
 
@@ -28,6 +47,8 @@ if BOARD_ROWS > BOARD_COLUMNS:
     BOARD_DIM = BOARD_ROWS
 else:
     BOARD_DIM = BOARD_COLUMNS
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # Pygame constants
 

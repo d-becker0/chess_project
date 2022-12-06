@@ -1,41 +1,20 @@
 from constants import *
+from piece import PieceMaker
+
+class SquareMaker:
+    def __init__(self):
+        self.piece_maker = PieceMaker()
+
+    def make_square(self, team, piece_type):
+        piece = self.piece_maker.make_piece(team, piece_type)
+        return Square(piece)
 
 class Square:
-    def __init__(self):
-        self.piece = None
+    def __init__(self, piece):
+        self.piece = piece
 
-        # need better name for these, since turning them to moves
-        # UUGGGGG DANTE! Source of a bug that took forever to find!!!
-        self.blocked_for_pieces = []
-        self.reached_by_pieces = []
-
-    # only recalculate moves of pieces that interact with previous and new square
-    def get_pieces_to_update(self):
-        visited = []
-        for move in self.blocked_for_pieces:
-            if move.piece not in visited:
-                visited.append(move.piece)
-
-                # print("Recalculated", move.piece, "at position", str((move.piece.row, move.piece.column)))
-                
-        for move in self.reached_by_pieces:
-            if move.piece not in visited:
-                visited.append(move.piece)
-
-                # print("Recalculated", move.piece, "at position", str((move.piece.row, move.piece.column)))
-
-        return visited
-        
-    def reset_subscriptions(self):
-        self.blocked_for_pieces = []
-        self.reached_by_pieces = []
-
-    def remove_move(self, move):
-        if move in self.blocked_for_pieces:
-            self.blocked_for_pieces.remove(move)
-        
-        if move in self.reached_by_pieces:
-            self.reached_by_pieces.remove(move)
+        self.moves_attacking_square = []
+        self.moves_blocked_from_attacking_square = []
 
 class Board:
     def __init__(self):
@@ -46,36 +25,9 @@ class Board:
 
         self.board = []
 
+        self.square_maker = SquareMaker()
+
         self._setup_board()
-        self._initialize_piece_moves()
-        self._subscribe_pieces_to_squares(self.pieces)
-
-    # TODO: lots of redundancy to reduce
-    def update(self, row, column, piece_square):
-        piece = piece_square.piece
-
-        new_square = self.board[row][column]
-
-        new_square.piece = piece
-        piece_square.piece = None
-
-        piece.move(row, column, self.board)
-
-        update_pieces = new_square.get_pieces_to_update()
-        update_pieces.extend( piece_square.get_pieces_to_update() )
-
-        # really ugly, but I need some way of getting rid of no longer valid moves
-        # there is a better way to do this, and I will do it later
-        for piece_to_update in update_pieces:
-            for move in piece_to_update.current_moves:
-                self.board[move.row][move.column].remove_move(move)
-            for move in piece_to_update.blocked_moves:
-                self.board[move.row][move.column].remove_move(move)
-
-        for piece_to_update in update_pieces:
-            piece_to_update.recalculate_moves(self.board)
-        
-        self._subscribe_pieces_to_squares(update_pieces)
 
     # board setup
     def _setup_board(self):
@@ -86,53 +38,23 @@ class Board:
         # 2nd to top row
         self.board.append(self._initialize_row(self.piece_forepattern, BLACK))
 
-        for i in range(2, middle_rows):
+        for i in range(2, middle_rows):   # creates 4 empty rows
             
-            self.board.append([   setup_square(EMPTY, EMPTY) for j in range(BOARD_COLUMNS)   ])
+            self.board.append([   self.square_maker.make_square(EMPTY, EMPTY) for j in range(BOARD_COLUMNS)   ])
         
         self.board.append(self._initialize_row(self.piece_forepattern, WHITE))
         self.board.append(self._initialize_row(self.piece_backpattern, WHITE))
     
-    def _initialize_piece_moves(self):
-        for row, column, piece in self.yield_coords_and_piece():
-            if piece:
-                piece.row = row
-                piece.column = column
-                piece.recalculate_moves(self.board)
-
-    def _subscribe_pieces_to_squares(self, pieces):
-        for piece in pieces:
-            self._subscribe_piece_moves_to_squares(piece)
-            
-    def _subscribe_piece_moves_to_squares(self, piece):
-        if piece:
-            for move in piece.current_moves:
-                self.board[move.row][move.column].reached_by_pieces.append(move)
-            for move in piece.blocked_moves:
-                self.board[move.row][move.column].blocked_for_pieces.append(move)
-
     def _initialize_row(self, pattern, team):
         row = []
         for piece_type in pattern:
 
-            square = setup_square(piece_type, team)
+            square = self.square_maker.make_square(team, piece_type)
             row.append(square)
             self.pieces.append(square.piece)
         return row
 
     def yield_coords_and_piece(self):
-        for row_val, row in enumerate(self.board):
-            for col_val, square in enumerate(row):
-                yield row_val, col_val, square.piece
-
-# a bit uggo. 
-from piece import Pawn, Rook, Knight, Bishop, Queen, King
-piece_switch = {PAWN: Pawn, ROOK: Rook, KNIGHT: Knight, BISHOP: Bishop, QUEEN: Queen, KING: King}
-def _fill_square(piece_type, team):
-    return piece_switch[piece_type](team)
-
-def setup_square(piece_type, team):
-    square = Square()
-    if piece_type != EMPTY:
-        square.piece = _fill_square(piece_type, team)
-    return square
+        for row_count, row in enumerate(self.board):
+            for col_count, square in enumerate(row):
+                yield row_count, col_count, square.piece

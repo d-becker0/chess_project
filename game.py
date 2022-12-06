@@ -1,32 +1,17 @@
 from constants import *
 from piece import King
 
+# player will be able to access all pieces and see all their legal moves
 class Player:
     def __init__(self, team, all_pieces):
         self.team = team
         self.pieces = self._get_team_pieces(all_pieces)
         self.king = self._get_king(self.pieces)
 
-        self.was_in_check = False
-    
-    def recalculate_all(self, board):
-        for piece in self.pieces:
-            piece.recalculate_moves(board)
+        self.was_in_check_last_turn = False
 
-    def find_checking_pieces(self, board):
-        king_square = board[self.king.row][self.king.column]
-        return [move.piece for move in king_square.reached_by_pieces if move.piece.team != self.team]
-
-    def find_pinning_pieces(self, board):
-        king_square = board[self.king.row][self.king.column]
-        return [move.piece for move in king_square.blocked_for_pieces if move.piece.team != self.team]
-
-    def in_check(self, board):
-        king_square = board[self.king.row][self.king.column]
-        for move in king_square.reached_by_pieces:
-            if move.piece.team != self.team:
-                return True
-        return False
+    def get_all_moves(self, board):
+        pass
 
     def _get_team_pieces(self, pieces):
         team_pieces = []

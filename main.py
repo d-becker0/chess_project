@@ -24,11 +24,11 @@ if __name__ == "__main__":
         pos = interface.event_loop()
 
         if pos:
-            column, row = pos # why do I need to reverse these? -> x,y to y, x
+            column, row = pos
             square = board.board[row][column]
 
             if (square.piece) and ( square.piece.team == current_team ):
-                # previous selection
+                # previous selection exists
                 if selected_coords:
                     display.unhighlight(selected_coords[0], selected_coords[1], selection, board.board)
                 
