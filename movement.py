@@ -1,37 +1,79 @@
 from constants import *
 
-class MoveEvaluatorMaker:
-    def __init__(self):
-        self.string_to_class = {
+class CheckLogic:
+    """
+        Class which defines basic check logic
+    """
+    def __init__(self, team, king):
+        self.team = team
+        self.king = king
 
+    def in_check(self):
+        pass
+
+class KingCheckLogic:
+    """
+        Class which defines basic check logic for king
+    """
+    pass
+    
+class LogicMaker:
+    def __init__(self):
+        # TODO: reuse classes
+
+        self.string_to_class = {
+            STANDARD_MOVE: MoveLogic(CheckLogic()),
+            KING_MOVE: MoveLogic(KingCheckLogic()),
+            # CASTLING: (CastlingLogic, CastlingCheckLogic)
+            PAWN_ATTACK: PawnAttackMoveLogic(CheckLogic()),
+            PAWN_DOUBLE: PawnDoubleMoveLogic(CheckLogic()),
+            # PROMOTION: (PawnPromoteLogic, CheckLogic),
+            # EN_PASSANT: (PawnEnpassantMoveLogic, EnpassantCheckLogic)
         }
     
     def _change_string_to_class(self, string):
         return self.string_to_class(string)
 
     def make(self, string, *args, **kwargs):
-        return self._change_string_to_class[string](*args, **kwargs)
+        return MoveLogic(CheckLogic()) #self._change_string_to_class[string](*args, **kwargs)
 
-class MoveEvaluator:
-    def __init__(self):
+# Needs to return a move object which 
+class MoveLogic:
+    def __init__(self, check_logic_instance):
+        self.check_logic = check_logic_instance  # this needs to know the board, piece, and king of piece team
+
+    def _results_in_check(self, template_move_on_board, board):
+        return self.check_logic.in_check(template_move_on_board, board)
+    
+    # Keep in mind, this needs access to the board the piece
+    def _parse_template(self, template, board):
         pass
 
-    def _results_in_check(self):
-        pass
+    def evaluate_template(self, template, board):
+        template_move_on_board = self._parse_template(template)
 
-    def evaluate_move(self):
-        pass
+class PawnDoubleMoveLogic:
+    pass
+
+class PawnAttackMoveLogic:
+    pass
+
+class PawnEnpassantMoveLogic:
+    pass
 
 class Move:
     """
         Stores move information and function for when it needs to be reevaluated
     """
-    def __init__(self, row, column, direction, distance, piece, can_take, is_legal, pieces_in_between, update_function):
-        self.to_row = row
-        self.to_column = column
+    def __init__(self, to_row, to_column, x_dir, y_dir, distance, 
+                 piece, can_take, is_legal, pieces_in_between, update_function):
+                 
+        self.to_row = to_row
+        self.to_column = to_column
 
-        self.direction = direction
-        self.distance = distance  
+        self.x_dir = x_dir
+        self.y_dir = y_dir
+        self.distance = distance
 
         self.piece = piece
 
@@ -50,8 +92,7 @@ class Move:
     def __eq__(self, other_move):
         return (self.to_row, self.to_column) == (other_move.to_row, other_move.to_column)
 
-class MoveBehavior:
-        # TODO: Refactor, repetitive and messy
+
     def _find_moves(self, board):
         current_moves = []
         blocked_moves = []

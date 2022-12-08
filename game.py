@@ -10,8 +10,10 @@ class Player:
 
         self.was_in_check_last_turn = False
 
-    def get_all_moves(self, board):
+    def init_piece_moves(self, board):
         pass
+
+    
 
     def _get_team_pieces(self, pieces):
         team_pieces = []
