@@ -16,79 +16,6 @@ import pytest
 
 # test_board = Board()
 
-
-"""
-    Requires quick way to initialize board from a mid game position
-    Quick way to populate moves for pieces (etc.)
-"""
-
-
-def parse_game_notes(notation):
-    inputs = []
-    expected_results = []
-    for turn, move_notation in enumerate(notation.split()):  # notation is algebraic chess notation with each move separated by space
-        current_board = get_board(inputs)   # build board off of all previous boards
-
-        # goal of unit test will be to find if the move from game is possible on that board according to my code
-        start_position, end_position, piece_type, move_type, causes_check, game_ends_how_or_continues = parse_move(current_board, move_notation)
-        inputs.append(
-            {
-                'current_board':current_board,
-                'turn':turn,
-                'start_position':start_position,
-                'end_position':end_position,
-            }
-        )
-        expected_results.append(
-            {
-                'piece_type':piece_type,
-                'move_type':move_type,
-                'causes_check':causes_check,
-                'ends_game':game_ends_how_or_continues
-            }
-        )
-
-        if game_ends_how_or_continues != 'continues':
-            break
-    
-    return inputs, expected_results
-
-# reuses already parsed turns
-def get_board(past_inputs):
-    if past_inputs:
-        pass
-    else:
-        pass # make starting board
-
-def parse_move(current_board, move):
-    pass
-
-def results_in_check(move):
-    pass
-
-def get_start_position(current_board, move):
-    pass
-
-def get_end_position(current_board, move):
-    pass
-
-def get_piece_type(move):
-    pass
-
-def get_move_type(current_board, move):
-    pass
-
-def continues_or_ends(move):
-    pass
-
-def ends_how(move):
-    pass
-    
-def game_note_loader(path = 'games.txt'):
-    with open(path, 'r') as file:
-        for game_notes in file.readlines():
-            yield game_notes
-
 from tqdm import tqdm
 def run_tests():
     # track which move types succeed vs fail
@@ -96,10 +23,19 @@ def run_tests():
     for game_notes in tqdm(game_note_loader()):
         inputs, expected_outputs = parse_game_notes(game_notes)
 
-        for i, input in enumerate(inputs):
+        for input, expected_output in zip(inputs, expected_outputs):
             board = populate_board(input['current_board'])
-            output = do_move(board, input)
+            try:
+                output = do_move(board, input)
+            except:
+                output = 'Error'
+                print('move results in error for code')
 
+            comparison = compare(output, expected_outputs)
+
+            track_comparison(comparison)
+
+    print_test_output()
 
 
 if __name__ == '__main__':
