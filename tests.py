@@ -7,8 +7,8 @@
     more of statistical confidence than true confidence... other tests needed later...
 """
 
-from constants import *
-from board import Board
+from old.constants import *
+from old.board import Board
 
 import pytest
 # import pandas as pd

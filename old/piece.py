@@ -1,4 +1,4 @@
-from constants import *
+from old.constants import *
 
 class Piece:
     def __init__(self, team):

@@ -1,7 +1,7 @@
-from constants import *
-from game import Game, Player
-from board import Board
-from visual import Display, Interface
+from old.constants import *
+from old.game import Game, Player
+from old.board import Board
+from old.visual import Display, Interface
 
 if __name__ == "__main__":
     board = Board()

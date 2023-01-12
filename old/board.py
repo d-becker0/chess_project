@@ -1,5 +1,20 @@
-from constants import *
+from old.constants import *
+from piece import PieceMaker
 
+class SquareMaker:
+    def __init__(self):
+        self.piece_maker = PieceMaker()
+
+    def make_square(self, team, piece_type):
+        piece = self.piece_maker.make_piece(team, piece_type)
+        return Square(piece)
+
+class Square:
+    def __init__(self, piece):
+        self.piece = piece
+
+        self.moves_attacking_square = []
+        self.moves_blocked_from_attacking_square = []
 
 class Board:
     def __init__(self, fen_string = None):
@@ -12,7 +27,35 @@ class Board:
 
         self.pieces = []
 
+        self.square_maker = SquareMaker()
+
         self.board = self._set_up_board_from_FEN(setup_fen)
+
+    # # board setup
+    # def _setup_board(self):
+    #     middle_rows = BOARD_ROWS - 2
+
+    #     # top row
+    #     self.board.append(self._initialize_row(self.piece_backpattern, BLACK))
+    #     # 2nd to top row
+    #     self.board.append(self._initialize_row(self.piece_forepattern, BLACK))
+
+    #     for i in range(2, middle_rows):   # creates 4 empty rows
+            
+    #         self.board.append([   self.square_maker.make_square(EMPTY, EMPTY) for j in range(BOARD_COLUMNS)   ])
+        
+    #     self.board.append(self._initialize_row(self.piece_forepattern, WHITE))
+    #     self.board.append(self._initialize_row(self.piece_backpattern, WHITE))
+    
+    # def _initialize_row(self, pattern, team):
+    #     row = []
+    #     for piece_type in pattern:
+
+    #         square = self.square_maker.make_square(team, piece_type)
+    #         row.append(square)
+    #         self.pieces.append(square.piece)
+
+    #     return row
 
     def _create_row(self, row_patterns):
         for row in row_patterns:

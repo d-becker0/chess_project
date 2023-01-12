@@ -2,7 +2,7 @@ from sys import exit
 
 import pygame
 
-from constants import *
+from old.constants import *
 
 class Interface:
     def __init__(self):

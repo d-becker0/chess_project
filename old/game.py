@@ -1,4 +1,4 @@
-from constants import *
+from old.constants import *
 from piece import King
 
 # player will be able to access all pieces and see all their legal moves

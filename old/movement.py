@@ -1,4 +1,4 @@
-from constants import *
+from old.constants import *
 
 class CheckLogic:
     """
