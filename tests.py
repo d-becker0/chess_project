@@ -11,10 +11,12 @@ from constants import *
 from board import Board
 
 import pytest
+import pandas as pd
 
-# import pandas as pd
-# game_notes = pd.read_csv('games.csv')
+def start_test_game():
+    pass
 
-test_board = Board()
+def test_piece_moves():
+    game_data = pd.read_pickle('test_data/game_info')
 
-def 
+    for game_id in game_data['game_id'].unique:
